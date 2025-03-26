@@ -1,0 +1,10 @@
+download:
+  image:
+    suffix: .png
+
+plugins:
+  after_album:
+  - plugin: img2pdf
+    kwargs:
+      filename_rule: Aname
+      delete_original_file: true
