@@ -1,6 +1,5 @@
 # Nagusa Bot(或许是暂用名？)
 - 开发中
-- public repository是因为服务器发病了登不上git账号
 
 ## 现有功能
 
