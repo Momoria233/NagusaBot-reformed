@@ -1,6 +1,6 @@
 from nonebot import on_regex
 from nonebot.typing import T_State
-from nonebot.adapters.onebot.v11 import GroupMessageEvent, Bot, Message # type: ignore
+from nonebot.adapters.onebot.v12 import GroupMessageEvent, Bot, Message # type: ignore
 
 nao = on_regex(pattern=r'^闹了$',priority=1)
 

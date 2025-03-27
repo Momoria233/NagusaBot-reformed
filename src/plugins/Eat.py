@@ -1,7 +1,7 @@
 from nonebot import on_regex
 import random, os, json
 from nonebot.typing import T_State
-from nonebot.adapters.onebot.v11 import GroupMessageEvent, Bot, Message # type: ignore
+from nonebot.adapters.onebot.v12 import GroupMessageEvent, Bot, Message # type: ignore
 
 EatL = on_regex(pattern=r'^吃饭$',priority=1)
 
