@@ -1,5 +1,6 @@
 # Nagusa Bot(或许是暂用名？)
 - 开发中
+- 因为我没找到怎么直接在linux pull下来然后跑的方法 所以这个repository仅作储存使用了
 
 ## 现有功能
 
