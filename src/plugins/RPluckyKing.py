@@ -1,5 +1,5 @@
 from nonebot.typing import T_State
-from nonebot.adapters.onebot.v12 import Bot, Message, LuckyKingNotifyEvent # type: ignore
+from nonebot.adapters.onebot.v11 import Bot, Message, LuckyKingNotifyEvent # type: ignore
 from nonebot import on_notice
 import os, json, random
 
