@@ -1,6 +1,7 @@
 import jmcomic
 import os
 import asyncio
+import shutil
 from concurrent.futures import ThreadPoolExecutor
 import jmcomic.jm_exception
 
@@ -18,6 +19,7 @@ download:
 
 dir_rule:
   base_dir: ./jmcache/src/
+  rule: Bd_Aid
 
 plugins:
   after_album:
@@ -52,5 +54,5 @@ async def jm_download(code: str) -> tuple[int, str]:
         if len(downloader.download_failed_list) != 0:
             os.remove(pdf_path)
             return -1, "未成功下载"
-
+    shutil.rmtree(os.path.abspath(f"./jmcache/src/{code}"))
     return 0, pdf_path
