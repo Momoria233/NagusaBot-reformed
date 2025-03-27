@@ -22,10 +22,10 @@ dir_rule:
 plugins:
   after_album:
     - plugin: img2pdf
-    kwargs:
-      pdf_dir: ./jmcache/pdf/
-      filename_rule: Aid
-      delete_original_file: false
+      kwargs:
+        pdf_dir: ./jmcache/pdf/
+        filename_rule: Aid
+        delete_original_file: false
 """
     )
 
