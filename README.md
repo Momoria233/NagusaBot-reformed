@@ -25,7 +25,7 @@
 
 3. 克隆项目到本地
 
-    > git clone https://github.com/Momoria233/NagusaBot-test.git  
+    > git clone https://github.com/Momoria233/NagusaBot.git  
     > cd NagusaBot
 
 4. 配置 `.venv`
