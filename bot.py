@@ -1,12 +1,10 @@
 import nonebot
-from nonebot.adapters.onebot.v11 import Adapter as ONEBOT_V11Adapter # type: ignore
-
-
+from nonebot.adapters.onebot.v12 import Adapter as ONEBOT_V12Adapter # type: ignore
 
 nonebot.init()
 
 driver = nonebot.get_driver()
-driver.register_adapter(ONEBOT_V11Adapter)
+driver.register_adapter(ONEBOT_V12Adapter)
 
 nonebot.load_from_toml("pyproject.toml")
 
