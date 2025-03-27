@@ -7,6 +7,7 @@ pokeReact = on_notice()
 
 @pokeReact.handle()
 async def pokeReaction (bot: Bot, event: PokeNotifyEvent, state: T_State):
+    print(event.target_id, event.self_id)
     if event.target_id == event.self_id:
         user = event.get_user_id()
         at = "[CQ:at,qq={}]".format(user)

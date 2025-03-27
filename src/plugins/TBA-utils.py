@@ -1,6 +1,6 @@
 from nonebot.typing import T_State
-from nonebot.adapters.onebot.v12 import Bot, Message, GroupRequestEvent, GroupDecreaseNoticeEvent # type: ignore
-# from nonebot.adapters.onebot.v12 import GroupNameChangeEvent //这行代码仅供展示 跑不通
+from nonebot.adapters.onebot.v11 import Bot, Message, GroupRequestEvent, GroupDecreaseNoticeEvent # type: ignore
+# from nonebot.adapters.onebot.v12 import GroupNameChangeEvent #这行代码仅供展示 跑不通
 
 
 '''

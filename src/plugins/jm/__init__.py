@@ -1,6 +1,6 @@
 from nonebot.rule import to_me
 from nonebot.plugin import on_command
-from nonebot.adapters.onebot.v12 import Bot, GroupMessageEvent, MessageSegment, Message
+from nonebot.adapters.onebot.v12 import Bot, GroupMessageEvent, MessageSegment, Message # type: ignore
 from nonebot.params import CommandArg
 from nonebot import get_driver
 from nonebot import logger
