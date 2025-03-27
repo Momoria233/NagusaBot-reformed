@@ -10,22 +10,22 @@ def jm_init():
     option = jmcomic.create_option_by_str(
         """
 download:
-    cache: true
-    image:
-        suffix: .png
-    threading:
-        image: 16
+  cache: true
+  image:
+    suffix: .png
+  threading:
+    image: 16
 
 dir_rule:
-    base_dir: ./jmcache/src/
+  base_dir: ./jmcache/src/
 
 plugins:
-    after_album:
-        - plugin: img2pdf
-          kwargs:
-              pdf_dir: ./jmcache/pdf/
-              filename_rule: Aid
-              delete_original_file: false
+  after_album:
+    - plugin: img2pdf
+    kwargs:
+      pdf_dir: ./jmcache/pdf/
+      filename_rule: Aid
+      delete_original_file: false
 """
     )
 
