@@ -1,11 +1,12 @@
 # Nagusa Bot
+
 -   开发中
 
 ## 现有功能
 
 -   入群欢迎
 -   吃饭功能
--   jm 下载（？）/onebot v12支持有问题 正在重写
+-   jm 下载（？）/onebot v12 支持有问题 正在重写
 -   还有不少 但是我还没写
 
 ## 部署方法
@@ -39,5 +40,5 @@
 
 ## tbd
 
--   [ ] 通过send_group_forward_msg实现搬史bot
+-   [ ] 通过 send_group_forward_msg 实现搬史 bot
 -   [ ] 更多的有趣功能

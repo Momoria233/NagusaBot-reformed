@@ -1,9 +1,10 @@
 from nonebot.typing import T_State
-from nonebot.adapters.onebot.v11 import Bot, Message, GroupRequestEvent, GroupDecreaseNoticeEvent # type: ignore
+from nonebot.adapters.onebot.v11 import Bot, Message, GroupRequestEvent, GroupDecreaseNoticeEvent  # type: ignore
+
 # from nonebot.adapters.onebot.v12 import GroupNameChangeEvent #这行代码仅供展示 跑不通
 
 
-'''
+"""
 这里是一些在https://onebot.adapters.nonebot.dev/docs/api/v11/index以及https://github.com/botuniverse/onebot-11/blob/master/event/README.md找到的有趣的事件
 如果之后有相应想法的话可以扩充成单独的plugin
 
@@ -24,4 +25,4 @@ GroupDecreaseNoticeEvent是在有人退群的时候触发的事件 但是好像�
 哦对 至于票务通知
 这个没太get到具体要写的是什么 不过通知类的其实最方便的就是直接人工上号at所有人
 
-'''
+"""
