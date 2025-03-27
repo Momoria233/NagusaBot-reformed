@@ -1,5 +1,4 @@
-# Nagusa Bot(或许是暂用名？)
-
+# Nagusa Bot
 -   开发中
 
 ## 现有功能
@@ -27,7 +26,7 @@
 3. 克隆项目到本地
 
     > git clone https://github.com/Momoria233/NagusaBot-test.git  
-    > cd NagusaBot-test
+    > cd NagusaBot
 
 4. 配置 `.venv`
 
