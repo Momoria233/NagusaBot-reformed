@@ -27,7 +27,7 @@ async def Eat(bot: Bot, event: GroupMessageEvent, state: T_State):
     if not Config.activate_eat:
         await EatL.finish()
     randList = Config.food + Config.stu
-    msg = f"吃到了{random.choice(randList)}。"
+    msg = f" 吃到了{random.choice(randList)}。"
     await EatL.finish(message=Message([at,msg]))
 
 
