@@ -41,8 +41,8 @@
 ## tbd
 
 -   [ ] 学生生日播报功能
--   [ ] 根据特定群聊制定不同的welcome内容
+-   [x] 根据特定群聊制定不同的welcome内容
 -   [ ] 完成naole.py
--   [ ] 修复jm功能+制作白名单
+-   [ ] 修复jm功能+制作白名单 
 -   [ ] 通过 send_group_forward_msg 实现搬史 bot（？
 
