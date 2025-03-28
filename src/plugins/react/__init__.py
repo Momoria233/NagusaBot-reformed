@@ -1,6 +1,7 @@
-import random, os, json
+import random, os
 from nonebot import on_notice, on_regex
 from nonebot.typing import T_State
+from nonebot import logger
 from nonebot.adapters.onebot.v11 import PokeNotifyEvent, LuckyKingNotifyEvent, GroupMessageEvent
 from nonebot.adapters.onebot.v11 import Bot, Message, MessageSegment
 from .config import Config
@@ -48,8 +49,8 @@ nao = on_regex(pattern=r"^闹了$", priority=1)
 @nao.handle()
 async def naoL(bot: Bot, event: GroupMessageEvent, state: T_State):
     if not Config.activate_nao:
-        nao.finish()
+        await nao.finish()
     if event.group_id == 996101999 or event.group_id == 225173408:
-        await nao.finish(MessageSegment.image(os.path.join(os.path.abspath(__file__), "naole.png")))
+        await nao.finish(MessageSegment.image(os.path.join(os.path.dirname(os.path.abspath(__file__)), "naole.png")))
     else:
         await nao.finish()

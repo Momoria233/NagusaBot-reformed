@@ -24,6 +24,8 @@ async def update_config():
             loop = asyncio.get_running_loop()
             res = await loop.run_in_executor(executor, requests.get, Config.data_url)
         res.raise_for_status()
+        if not os.path.exists(Config.data_path):
+            os.makedirs(os.path.dirname(Config.data_path))
         with open(Config.data_path, "wb") as file:
             file.write(res.content)
         logger.info("Data Updated!")
@@ -34,17 +36,16 @@ async def update_config():
         logger.warning("Data update failed, using cache instead.")
     return True
 
-
+start_date = None
 driver = get_driver()
 
 
 @driver.on_startup
 async def init_func():
-    with ThreadPoolExecutor() as executor:
-        await update_config(executor)
+    await update_config()
     global start_date, tz
     tz = pytz.timezone("Asia/Shanghai")
-    start_date: datetime = datetime.now(tz).replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+    start_date = datetime.now(tz).replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
     logger.info(f"Next action will occur at {start_date.strftime("%a %b %d %Y %H:%M:%S GMT%z (%Z)")}")
 
 
@@ -59,6 +60,9 @@ def get_birthday(now: datetime) -> List[str]:
     for student in data:
         birthday: str = student["BirthDay"]
         name: str = student["PersonalName"]
+        if "（" in name or "）" in name:
+            logger.warning(f"Skipping student {name} due to the same student.")
+            continue
         try:
             month: int = int(birthday.split("/")[0])
             day: int = int(birthday.split("/")[1])
@@ -87,9 +91,11 @@ async def report_birthday():
     logger.info(f"Today's birthday girl: {students}")
 
     bot = get_bot()
-    assert isinstance(bot, Bot)
+    if not isinstance(bot, Bot):
+        logger.critical("Bot not found")
+        return
     for id in Config.target_group_id:
-        bot.send_group_msg(group_id=id, message="......")  # TODO 生日祝福消息格式
+        bot.send_group_msg(group_id=id, message=f"老师，今天是{students}的生日，让我们祝她生日快乐！")  # TODO 换装去重
 
     next_date: datetime = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
     logger.info(f"Next action will occur at {next_date.strftime("%a %b %d %Y %H:%M:%S GMT%z (%Z)")}")

@@ -1,4 +1,4 @@
 class Config:
-    data_url = "https://github.com/SchaleDB/SchaleDB/blob/main/data/cn/students.json"
+    data_url = "https://gh-proxy.com/github.com/SchaleDB/SchaleDB/raw/main/data/cn/students.json"
     data_path = "./cache/birthday/students.json"
     target_group_id = []
