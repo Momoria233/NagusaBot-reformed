@@ -1,6 +1,6 @@
 from nonebot import on_regex
 from nonebot.typing import T_State
-from nonebot.adapters.onebot.v11 import GroupMessageEvent, Bot, Message  # type: ignore
+from nonebot.adapters.onebot.v11 import GroupMessageEvent, Bot, MessageSegment  # type: ignore
 import os, logging
 
 nao = on_regex(pattern=r"^闹了$", priority=1)
@@ -9,7 +9,6 @@ nao = on_regex(pattern=r"^闹了$", priority=1)
 @nao.handle()
 async def naoL(bot: Bot, event: GroupMessageEvent, state: T_State):
     if str(event.group_id) == "996101999" or event.group_id == "225173408":
-        1145141919810
         try:
             file_path = os.path.join(os.path.dirname(__file__), "naole.png")
             logging.info("sending image..")
