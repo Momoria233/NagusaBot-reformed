@@ -24,7 +24,7 @@ jmDown = on_command("jm", rule=to_me(), priority=1, block=True)
 
 @jmDown.handle()
 async def download_func(bot: Bot, event: GroupMessageEvent, args: Message = CommandArg()):
-    if not Config.allow_group:
+    if not event.group_id in Config.group_whitelist:
         jmDown.skip()
         return
     reply = MessageSegment.reply(event.message_id)
@@ -48,7 +48,7 @@ async def download_func(bot: Bot, event: GroupMessageEvent, args: Message = Comm
 
 @jmDown.handle()
 async def download_func(bot: Bot, event: PrivateMessageEvent, args: Message = CommandArg()):
-    if not Config.allow_private:
+    if not Config.allow_private or event.get_user_id() not in Config.user_whitelist:
         jmDown.skip()
         return
     reply = MessageSegment.reply(event.message_id)
