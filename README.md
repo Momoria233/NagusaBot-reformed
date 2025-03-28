@@ -6,7 +6,7 @@
 
 -   入群欢迎
 -   吃饭功能
--   jm 下载（？）/onebot v12 支持有问题 正在重写
+-   jm 下载（？）
 -   还有不少 但是我还没写
 
 ## 部署方法
@@ -40,5 +40,9 @@
 
 ## tbd
 
--   [ ] 通过 send_group_forward_msg 实现搬史 bot
--   [ ] 更多的有趣功能
+-   [ ] 学生生日播报功能
+-   [ ] 根据特定群聊制定不同的welcome内容
+-   [ ] 完成naole.py
+-   [ ] 修复jm功能+制作白名单
+-   [ ] 通过 send_group_forward_msg 实现搬史 bot（？
+
