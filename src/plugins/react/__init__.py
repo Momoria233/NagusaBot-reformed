@@ -73,8 +73,6 @@ async def naoL(bot: Bot, event: GroupMessageEvent, state: T_State):
             await EatL.finish()
     cooldown_tracker[user_id] = current_time
 
-    if not Config.activate_nao:
-        await nao.finish()
     if event.group_id == 996101999 or event.group_id == 225173408:
         await nao.finish(message = Message([at,MessageSegment.image(os.path.join(os.path.dirname(os.path.abspath(__file__)), "naole.png"))]))
     else:
@@ -118,7 +116,7 @@ async def aiaiL(bot: Bot, event: GroupMessageEvent, state: T_State):
             await aiyou.finish()
     cooldown_tracker[user_id] = current_time
 
-    if event.group_id == Config.aiai_group and event.get_user_id() != Config.aiai_usr:
+    if event.group_id == Config.aiai_group and event.get_user_id() != str(Config.aiai_usr):
         logger.info(os.path.join(os.path.dirname(os.path.abspath(__file__)), "buzhunaiai.jpg"))
         await aiai.finish(message = Message([at,MessageSegment.image(os.path.join(os.path.dirname(os.path.abspath(__file__)), "buzhunaiai.jpg"))]))
     else:
