@@ -4,12 +4,13 @@ from nonebot.typing import T_State
 from nonebot import logger
 from nonebot.adapters.onebot.v11 import PokeNotifyEvent, LuckyKingNotifyEvent, GroupMessageEvent
 from nonebot.adapters.onebot.v11 import Bot, Message, MessageSegment
+from nonebot.rule import fullmatch
 from .config import Config
 
 EatL = on_regex(pattern=r"^吃饭$", priority=1)
 
 cooldown_tracker = {}
-cooldown_period = 30
+cooldown_period = Config.cooldown_period
 
 @EatL.handle()
 async def Eat(bot: Bot, event: GroupMessageEvent, state: T_State):
@@ -78,3 +79,47 @@ async def naoL(bot: Bot, event: GroupMessageEvent, state: T_State):
         await nao.finish(message = Message([at,MessageSegment.image(os.path.join(os.path.dirname(os.path.abspath(__file__)), "naole.png"))]))
     else:
         await nao.finish()
+
+
+aiyou = on_regex(pattern=r"^哎呦$", priority=1)
+
+@aiyou.handle()
+async def aiyouL(bot: Bot, event: GroupMessageEvent, state: T_State):
+    user_id = event.get_user_id()
+    current_time = time.time()
+    at = MessageSegment.at(event.get_user_id())
+
+    if user_id in cooldown_tracker:
+        last_used = cooldown_tracker[user_id]
+        if current_time - last_used < cooldown_period:
+            remaining_time = cooldown_period - (current_time - last_used)
+            await aiyou.finish()
+    cooldown_tracker[user_id] = current_time
+
+    if event.group_id == 996101999 or event.group_id == 225173408:
+        logger.info(os.path.join(os.path.dirname(os.path.abspath(__file__)), "buxuaiyou.jpg"))
+        await aiyou.finish(message = Message([at,MessageSegment.image(os.path.join(os.path.dirname(os.path.abspath(__file__)), "buxuaiyou.jpg"))]))
+    else:
+        await aiyou.finish()
+
+
+aiai = on_regex(pattern=r"^唉唉$", priority=1)
+
+@aiai.handle()
+async def aiaiL(bot: Bot, event: GroupMessageEvent, state: T_State):
+    user_id = event.get_user_id()
+    current_time = time.time()
+    at = MessageSegment.at(event.get_user_id())
+
+    if user_id in cooldown_tracker:
+        last_used = cooldown_tracker[user_id]
+        if current_time - last_used < cooldown_period:
+            remaining_time = cooldown_period - (current_time - last_used)
+            await aiyou.finish()
+    cooldown_tracker[user_id] = current_time
+
+    if event.group_id == Config.aiai_group and event.get_user_id() != Config.aiai_usr:
+        logger.info(os.path.join(os.path.dirname(os.path.abspath(__file__)), "buzhunaiai.jpg"))
+        await aiai.finish(message = Message([at,MessageSegment.image(os.path.join(os.path.dirname(os.path.abspath(__file__)), "buzhunaiai.jpg"))]))
+    else:
+        await aiai.finish()
