@@ -54,5 +54,3 @@ class Config:
     ]
 
     aiyou_group_whitelist = [225173408,996101999]
-    aiai_group = [225173408,996101999]
-    aiai_usr = [2891544717,2447209382]
