@@ -1,5 +1,5 @@
 class Config:
-    cooldown_period = 30
+    cooldown_period = 10
     activate_eat = True
     food = [
         "白菜",
