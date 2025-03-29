@@ -117,10 +117,10 @@ async def aiaiL(bot: Bot, event: GroupMessageEvent, state: T_State):
     cooldown_tracker[user_id] = current_time
 
     if event.group_id == 996101999 or event.group_id == 225173408:
-        if event.get_user_id() == "2891544717" or "2447209382":
+        if event.get_user_id() == "2891544717":
             await aiai.finish()
         else:
-            logger.info(os.path.join(os.path.dirname(os.path.abspath(__file__)), "buzhunaiai.jpg"))
-            await aiai.finish(message = Message([at,MessageSegment.image(os.path.join(os.path.dirname(os.path.abspath(__file__)), "buzhunaiai.jpg"))]))
+            logger.info(os.path.join(os.path.dirname(os.path.abspath(__file__)), "buzhunaiai.png"))
+            await aiai.finish(message = Message([at,MessageSegment.image(os.path.join(os.path.dirname(os.path.abspath(__file__)), "buzhunaiai.png"))]))
     else:
         await aiai.finish()
