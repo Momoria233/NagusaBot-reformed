@@ -1,4 +1,5 @@
 class Config:
+    cooldown_period = 10
     activate_eat = True
     food = [
         "白菜",
@@ -52,4 +53,4 @@ class Config:
         "老师是手气王，真幸运呢 恭喜",
     ]
 
-    activate_nao = True
+    aiyou_group_whitelist = [225173408,996101999]
