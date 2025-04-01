@@ -18,22 +18,26 @@ from .config import Config
 cooldown_tracker = {}
 cooldown_period = Config.cooldown_period
 
+
+def usr_cd_check(user_id: str) -> bool:
+    current_time = time.time()
+    if user_id in cooldown_tracker:
+        last_used = cooldown_tracker[user_id]
+        if current_time - last_used < cooldown_period:
+            return False
+    cooldown_tracker[user_id] = current_time
+    return True
+
+
 EatL = on_regex(pattern=r"^吃饭$", priority=1)
 
 
 @EatL.handle()
 async def Eat(bot: Bot, event: GroupMessageEvent, state: T_State):
     user_id = event.get_user_id()
-    current_time = time.time()
-    at = MessageSegment.at(event.get_user_id())
-
-    if user_id in cooldown_tracker:
-        last_used = cooldown_tracker[user_id]
-        if current_time - last_used < cooldown_period:
-            remaining_time = cooldown_period - (current_time - last_used)
-            await EatL.finish()
-    cooldown_tracker[user_id] = current_time
-
+    at = MessageSegment.at(user_id)
+    if not usr_cd_check(user_id):
+        await EatL.finish()
     if not Config.activate_eat:
         await EatL.finish()
     Total_Assult_food = f"{random.choice(Config.Total_Assault_difficulty)}难度的{random.choice(Config.Total_Assault_bosslist)}"
@@ -49,16 +53,9 @@ Start_TotalAst = on_regex(pattern=r"^开票$", priority=1)
 @Start_TotalAst.handle()
 async def StartTotalAst(bot: Bot, event: GroupMessageEvent, state: T_State):
     user_id = event.get_user_id()
-    current_time = time.time()
-    at = MessageSegment.at(event.get_user_id())
-
-    if user_id in cooldown_tracker:
-        last_used = cooldown_tracker[user_id]
-        if current_time - last_used < cooldown_period:
-            remaining_time = cooldown_period - (current_time - last_used)
-            await Start_TotalAst.finish()
-    cooldown_tracker[user_id] = current_time
-
+    at = MessageSegment.at(user_id)
+    if not usr_cd_check(user_id):
+        await Start_TotalAst.finish()
     if not Config.activate_TotalAst:
         await Start_TotalAst.finish()
     opt = ["炸票", "出分"]
@@ -98,16 +95,9 @@ nao = on_regex(pattern=r"^闹了$", priority=1)
 @nao.handle()
 async def naoL(bot: Bot, event: GroupMessageEvent, state: T_State):
     user_id = event.get_user_id()
-    current_time = time.time()
-    at = MessageSegment.at(event.get_user_id())
-
-    if user_id in cooldown_tracker:
-        last_used = cooldown_tracker[user_id]
-        if current_time - last_used < cooldown_period:
-            remaining_time = cooldown_period - (current_time - last_used)
-            await nao.finish()
-    cooldown_tracker[user_id] = current_time
-
+    at = MessageSegment.at(user_id)
+    if not usr_cd_check(user_id):
+        await nao.finish()
     if event.group_id in Config.ai_group_whitelist:
         await nao.finish(message=Message([at, MessageSegment.image(os.path.join(os.path.dirname(os.path.abspath(__file__)), "naole.png"))]))
     else:
@@ -120,16 +110,9 @@ aiyou = on_regex(pattern=r"^哎呦$", priority=1)
 @aiyou.handle()
 async def aiyouL(bot: Bot, event: GroupMessageEvent, state: T_State):
     user_id = event.get_user_id()
-    current_time = time.time()
-    at = MessageSegment.at(event.get_user_id())
-
-    if user_id in cooldown_tracker:
-        last_used = cooldown_tracker[user_id]
-        if current_time - last_used < cooldown_period:
-            remaining_time = cooldown_period - (current_time - last_used)
-            await aiyou.finish()
-    cooldown_tracker[user_id] = current_time
-
+    at = MessageSegment.at(user_id)
+    if not usr_cd_check(user_id):
+        await aiyou.finish()
     if event.group_id in Config.ai_group_whitelist:
         logger.info(os.path.join(os.path.dirname(os.path.abspath(__file__)), "buxuaiyou.jpg"))
         await aiyou.finish(message=Message([at, MessageSegment.image(os.path.join(os.path.dirname(os.path.abspath(__file__)), "buxuaiyou.jpg"))]))
@@ -143,18 +126,11 @@ aiai = on_regex(pattern=r"^唉唉$", priority=1)
 @aiai.handle()
 async def aiaiL(bot: Bot, event: GroupMessageEvent, state: T_State):
     user_id = event.get_user_id()
-    current_time = time.time()
-    at = MessageSegment.at(event.get_user_id())
-
-    if user_id in cooldown_tracker:
-        last_used = cooldown_tracker[user_id]
-        if current_time - last_used < cooldown_period:
-            remaining_time = cooldown_period - (current_time - last_used)
-            await aiai.finish()
-    cooldown_tracker[user_id] = current_time
-
+    at = MessageSegment.at(user_id)
+    if not usr_cd_check(user_id):
+        await aiai.finish()
     if event.group_id in Config.ai_group_whitelist:
-        if event.get_user_id() == "2891544717":
+        if user_id in Config.ai_usr_whitelist:
             await aiai.finish()
         else:
             logger.info(os.path.join(os.path.dirname(os.path.abspath(__file__)), "buzhunaiai.png"))
@@ -169,18 +145,10 @@ zhalan = on_regex(pattern=r"^栅栏$", priority=1)
 @zhalan.handle()
 async def zhalanL(bot: Bot, event: GroupMessageEvent, state: T_State):
     user_id = event.get_user_id()
-    current_time = time.time()
-    at = MessageSegment.at(event.get_user_id())
-
-    if user_id in cooldown_tracker:
-        last_used = cooldown_tracker[user_id]
-        if current_time - last_used < cooldown_period:
-            remaining_time = cooldown_period - (current_time - last_used)
-            await zhalan.finish()
-    cooldown_tracker[user_id] = current_time
-
+    at = MessageSegment.at(user_id)
+    if not usr_cd_check(user_id):
+        await zhalan.finish()
     if event.group_id in Config.ai_group_whitelist:
-        # logger.info(os.path.join(os.path.dirname(os.path.abspath(__file__)), "buxuaiyou.jpg"))
         await zhalan.finish(message=Message([at, MessageSegment.image(os.path.join(os.path.dirname(os.path.abspath(__file__)), "zhalan.jpg"))]))
     else:
         await zhalan.finish()
@@ -192,16 +160,9 @@ pinhaofan = on_regex(pattern=r"^拼好饭$", priority=1)
 @pinhaofan.handle()
 async def pin(bot: Bot, event: GroupMessageEvent, state: T_State):
     user_id = event.get_user_id()
-    current_time = time.time()
-    at = MessageSegment.at(event.get_user_id())
-
-    if user_id in cooldown_tracker:
-        last_used = cooldown_tracker[user_id]
-        if current_time - last_used < cooldown_period:
-            remaining_time = cooldown_period - (current_time - last_used)
-            await pinhaofan.finish()
-    cooldown_tracker[user_id] = current_time
-
+    at = MessageSegment.at(user_id)
+    if not usr_cd_check(user_id):
+        await pinhaofan.finish()
     if not Config.activate_eat:
         await pinhaofan.finish()
     Total_Assult_food = f"{random.choice(Config.Total_Assault_difficulty)}难度的{random.choice(Config.Total_Assault_bosslist)}"

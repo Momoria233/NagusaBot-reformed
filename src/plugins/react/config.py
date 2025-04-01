@@ -75,3 +75,4 @@ class Config:
     ]
 
     ai_group_whitelist = [225173408, 996101999]
+    ai_usr_whitelist = [2891544717]
