@@ -1,19 +1,18 @@
+import asyncio
+import json
+import os
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from typing import List
-import requests
-import asyncio
+
 import pytz
-import json
-import os
+import requests
+from nonebot import get_bot, get_driver, logger, require
 from nonebot.adapters.onebot.v11 import Bot
-from nonebot import get_driver
-from nonebot import get_bot
-from nonebot import require
-from nonebot import logger
 
 require("nonebot_plugin_apscheduler")
 from nonebot_plugin_apscheduler import scheduler
+
 from .config import Config
 
 
@@ -35,6 +34,7 @@ async def update_config():
             return False
         logger.warning("Data update failed, using cache instead.")
     return True
+
 
 start_date = None
 driver = get_driver()

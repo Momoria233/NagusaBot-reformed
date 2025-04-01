@@ -59,28 +59,8 @@ class Config:
         "爱莉",
         "乐队形态的爱莉",
     ]
-    Total_Assault_bosslist = [
-        "goz",
-        "大蛇",
-        "hod",
-        "猫鬼",
-        "主教",
-        "寿司人",
-        "气垫船若藻",
-        "鸡斯拉",
-        "切赛德",
-        "白&黑",
-        "格里高利"
-    ]
-    Total_Assault_difficulty = [
-        "Normal",
-        "Hard",
-        "VeryHard",
-        "Hardcore",
-        "extreme",
-        "ins",
-        "Torment"
-    ]
+    Total_Assault_bosslist = ["goz", "大蛇", "hod", "猫鬼", "主教", "寿司人", "气垫船若藻", "鸡斯拉", "切赛德", "白&黑", "格里高利"]
+    Total_Assault_difficulty = ["Normal", "Hard", "VeryHard", "Hardcore", "extreme", "ins", "Torment"]
     activate_poke = True
     react = [
         "唔...",
@@ -94,4 +74,4 @@ class Config:
         "老师是手气王，真幸运呢 恭喜",
     ]
 
-    ai_group_whitelist = [225173408,996101999]
+    ai_group_whitelist = [225173408, 996101999]

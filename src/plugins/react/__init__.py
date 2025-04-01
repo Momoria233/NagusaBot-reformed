@@ -1,15 +1,25 @@
-import random, os, time
-from nonebot import on_notice, on_regex
+import os
+import random
+import time
+
+from nonebot import logger, on_notice, on_regex
+from nonebot.adapters.onebot.v11 import (
+    Bot,
+    GroupMessageEvent,
+    LuckyKingNotifyEvent,
+    Message,
+    MessageSegment,
+    PokeNotifyEvent,
+)
 from nonebot.typing import T_State
-from nonebot import logger
-from nonebot.adapters.onebot.v11 import PokeNotifyEvent, LuckyKingNotifyEvent, GroupMessageEvent
-from nonebot.adapters.onebot.v11 import Bot, Message, MessageSegment
+
 from .config import Config
 
 cooldown_tracker = {}
 cooldown_period = Config.cooldown_period
 
 EatL = on_regex(pattern=r"^吃饭$", priority=1)
+
 
 @EatL.handle()
 async def Eat(bot: Bot, event: GroupMessageEvent, state: T_State):
@@ -27,12 +37,14 @@ async def Eat(bot: Bot, event: GroupMessageEvent, state: T_State):
     if not Config.activate_eat:
         await EatL.finish()
     Total_Assult_food = f"{random.choice(Config.Total_Assault_difficulty)}难度的{random.choice(Config.Total_Assault_bosslist)}"
-    randFood =random.choice(Config.food + Config.stu)
+    randFood = random.choice(Config.food + Config.stu)
     selected_food = random.choices([randFood, Total_Assult_food], weights=[70, 30], k=1)[0]
     msg = f" 吃到了{selected_food}。"
-    await EatL.finish(message=Message([at,msg]))
+    await EatL.finish(message=Message([at, msg]))
+
 
 Start_TotalAst = on_regex(pattern=r"^开票$", priority=1)
+
 
 @Start_TotalAst.handle()
 async def StartTotalAst(bot: Bot, event: GroupMessageEvent, state: T_State):
@@ -49,10 +61,10 @@ async def StartTotalAst(bot: Bot, event: GroupMessageEvent, state: T_State):
 
     if not Config.activate_TotalAst:
         await Start_TotalAst.finish()
-    opt = ["炸票","出分"]
+    opt = ["炸票", "出分"]
     selected_difficulty = random.choices(Config.Total_Assault_difficulty, weights=[2, 2, 3, 3, 20, 50, 20], k=1)[0]
     Total_Assault = f" 打了{selected_difficulty}难度的{random.choice(Config.Total_Assault_bosslist)}，{random.choice(opt)}了。"
-    await Start_TotalAst.finish(message=Message([at,Total_Assault]))
+    await Start_TotalAst.finish(message=Message([at, Total_Assault]))
 
 
 pokeReact = on_notice()
@@ -97,12 +109,13 @@ async def naoL(bot: Bot, event: GroupMessageEvent, state: T_State):
     cooldown_tracker[user_id] = current_time
 
     if event.group_id in Config.ai_group_whitelist:
-        await nao.finish(message = Message([at,MessageSegment.image(os.path.join(os.path.dirname(os.path.abspath(__file__)), "naole.png"))]))
+        await nao.finish(message=Message([at, MessageSegment.image(os.path.join(os.path.dirname(os.path.abspath(__file__)), "naole.png"))]))
     else:
         await nao.finish()
 
 
 aiyou = on_regex(pattern=r"^哎呦$", priority=1)
+
 
 @aiyou.handle()
 async def aiyouL(bot: Bot, event: GroupMessageEvent, state: T_State):
@@ -119,12 +132,13 @@ async def aiyouL(bot: Bot, event: GroupMessageEvent, state: T_State):
 
     if event.group_id in Config.ai_group_whitelist:
         logger.info(os.path.join(os.path.dirname(os.path.abspath(__file__)), "buxuaiyou.jpg"))
-        await aiyou.finish(message = Message([at,MessageSegment.image(os.path.join(os.path.dirname(os.path.abspath(__file__)), "buxuaiyou.jpg"))]))
+        await aiyou.finish(message=Message([at, MessageSegment.image(os.path.join(os.path.dirname(os.path.abspath(__file__)), "buxuaiyou.jpg"))]))
     else:
         await aiyou.finish()
 
 
 aiai = on_regex(pattern=r"^唉唉$", priority=1)
+
 
 @aiai.handle()
 async def aiaiL(bot: Bot, event: GroupMessageEvent, state: T_State):
@@ -144,11 +158,13 @@ async def aiaiL(bot: Bot, event: GroupMessageEvent, state: T_State):
             await aiai.finish()
         else:
             logger.info(os.path.join(os.path.dirname(os.path.abspath(__file__)), "buzhunaiai.png"))
-            await aiai.finish(message = Message([at,MessageSegment.image(os.path.join(os.path.dirname(os.path.abspath(__file__)), "buzhunaiai.png"))]))
+            await aiai.finish(message=Message([at, MessageSegment.image(os.path.join(os.path.dirname(os.path.abspath(__file__)), "buzhunaiai.png"))]))
     else:
         await aiai.finish()
 
+
 zhalan = on_regex(pattern=r"^栅栏$", priority=1)
+
 
 @zhalan.handle()
 async def zhalanL(bot: Bot, event: GroupMessageEvent, state: T_State):
@@ -165,11 +181,13 @@ async def zhalanL(bot: Bot, event: GroupMessageEvent, state: T_State):
 
     if event.group_id in Config.ai_group_whitelist:
         # logger.info(os.path.join(os.path.dirname(os.path.abspath(__file__)), "buxuaiyou.jpg"))
-        await zhalan.finish(message = Message([at,MessageSegment.image(os.path.join(os.path.dirname(os.path.abspath(__file__)), "zhalan.jpg"))]))
+        await zhalan.finish(message=Message([at, MessageSegment.image(os.path.join(os.path.dirname(os.path.abspath(__file__)), "zhalan.jpg"))]))
     else:
         await zhalan.finish()
 
+
 pinhaofan = on_regex(pattern=r"^拼好饭$", priority=1)
+
 
 @pinhaofan.handle()
 async def pin(bot: Bot, event: GroupMessageEvent, state: T_State):
@@ -187,7 +205,7 @@ async def pin(bot: Bot, event: GroupMessageEvent, state: T_State):
     if not Config.activate_eat:
         await pinhaofan.finish()
     Total_Assult_food = f"{random.choice(Config.Total_Assault_difficulty)}难度的{random.choice(Config.Total_Assault_bosslist)}"
-    randFood =random.choice(Config.food + Config.stu)
+    randFood = random.choice(Config.food + Config.stu)
     selected_food = random.choices([randFood, Total_Assult_food], weights=[70, 30], k=1)[0]
     msg = f" 您与{random.randint(1,1052)}位群友一起拼到了{selected_food}，为您节省了{round(random.uniform(1,20),2)}元。"
-    await pinhaofan.finish(message=Message([at,msg]))
+    await pinhaofan.finish(message=Message([at, msg]))
