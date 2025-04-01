@@ -96,7 +96,7 @@ async def naoL(bot: Bot, event: GroupMessageEvent, state: T_State):
             await nao.finish()
     cooldown_tracker[user_id] = current_time
 
-    if event.group_id == 996101999 or event.group_id == 225173408:
+    if event.group_id in Config.ai_group_whitelist:
         await nao.finish(message = Message([at,MessageSegment.image(os.path.join(os.path.dirname(os.path.abspath(__file__)), "naole.png"))]))
     else:
         await nao.finish()
@@ -117,7 +117,7 @@ async def aiyouL(bot: Bot, event: GroupMessageEvent, state: T_State):
             await aiyou.finish()
     cooldown_tracker[user_id] = current_time
 
-    if event.group_id == 996101999 or event.group_id == 225173408:
+    if event.group_id in Config.ai_group_whitelist:
         logger.info(os.path.join(os.path.dirname(os.path.abspath(__file__)), "buxuaiyou.jpg"))
         await aiyou.finish(message = Message([at,MessageSegment.image(os.path.join(os.path.dirname(os.path.abspath(__file__)), "buxuaiyou.jpg"))]))
     else:
@@ -139,7 +139,7 @@ async def aiaiL(bot: Bot, event: GroupMessageEvent, state: T_State):
             await aiai.finish()
     cooldown_tracker[user_id] = current_time
 
-    if event.group_id == 996101999 or event.group_id == 225173408:
+    if event.group_id in Config.ai_group_whitelist:
         if event.get_user_id() == "2891544717":
             await aiai.finish()
         else:
@@ -165,7 +165,7 @@ async def pin(bot: Bot, event: GroupMessageEvent, state: T_State):
 
     if not Config.activate_eat:
         await pinhaofan.finish()
-    Total_Assult_food = f"{random.choice(Config.Total_Assault_difficulty)}难度的{random.choice(Config.Total_Assault_bosslist)}。"
+    Total_Assult_food = f"{random.choice(Config.Total_Assault_difficulty)}难度的{random.choice(Config.Total_Assault_bosslist)}"
     randFood =random.choice(Config.food + Config.stu)
     selected_food = random.choices([randFood, Total_Assult_food], weights=[70, 30], k=1)[0]
     msg = f" 您与{random.randint(1,1052)}位群友一起拼到了{selected_food}，为您节省了{round(random.uniform(1,20),2)}元。"
