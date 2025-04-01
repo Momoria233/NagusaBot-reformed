@@ -148,6 +148,27 @@ async def aiaiL(bot: Bot, event: GroupMessageEvent, state: T_State):
     else:
         await aiai.finish()
 
+zhalan = on_regex(pattern=r"^栅栏$", priority=1)
+
+@zhalan.handle()
+async def zhalanL(bot: Bot, event: GroupMessageEvent, state: T_State):
+    user_id = event.get_user_id()
+    current_time = time.time()
+    at = MessageSegment.at(event.get_user_id())
+
+    if user_id in cooldown_tracker:
+        last_used = cooldown_tracker[user_id]
+        if current_time - last_used < cooldown_period:
+            remaining_time = cooldown_period - (current_time - last_used)
+            await zhalan.finish()
+    cooldown_tracker[user_id] = current_time
+
+    if event.group_id in Config.ai_group_whitelist:
+        # logger.info(os.path.join(os.path.dirname(os.path.abspath(__file__)), "buxuaiyou.jpg"))
+        await zhalan.finish(message = Message([at,MessageSegment.image(os.path.join(os.path.dirname(os.path.abspath(__file__)), "zhalan.jpg"))]))
+    else:
+        await zhalan.finish()
+
 pinhaofan = on_regex(pattern=r"^拼好饭$", priority=1)
 
 @pinhaofan.handle()
