@@ -26,13 +26,13 @@ async def Eat(bot: Bot, event: GroupMessageEvent, state: T_State):
 
     if not Config.activate_eat:
         await EatL.finish()
-    Total_Assult_food = f"{random.choice(Config.Total_Assault_difficulty)}难度的{random.choice(Config.Total_Assault_bosslist)}。"
+    Total_Assult_food = f"{random.choice(Config.Total_Assault_difficulty)}难度的{random.choice(Config.Total_Assault_bosslist)}"
     randFood =random.choice(Config.food + Config.stu)
     selected_food = random.choices([randFood, Total_Assult_food], weights=[70, 30], k=1)[0]
     msg = f" 吃到了{selected_food}。"
     await EatL.finish(message=Message([at,msg]))
 
-Start_TotalAst = on_regex(pattern=r"开票", priority=1)
+Start_TotalAst = on_regex(pattern=r"^开票$", priority=1)
 
 @Start_TotalAst.handle()
 async def StartTotalAst(bot: Bot, event: GroupMessageEvent, state: T_State):
@@ -149,6 +149,8 @@ async def aiaiL(bot: Bot, event: GroupMessageEvent, state: T_State):
         await aiai.finish()
 
 pinhaofan = on_regex(pattern=r"^拼好饭$", priority=1)
+
+@pinhaofan.handle()
 async def pin(bot: Bot, event: GroupMessageEvent, state: T_State):
     user_id = event.get_user_id()
     current_time = time.time()
