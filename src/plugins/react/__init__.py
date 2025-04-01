@@ -147,3 +147,24 @@ async def aiaiL(bot: Bot, event: GroupMessageEvent, state: T_State):
             await aiai.finish(message = Message([at,MessageSegment.image(os.path.join(os.path.dirname(os.path.abspath(__file__)), "buzhunaiai.png"))]))
     else:
         await aiai.finish()
+
+pinhaofan = on_regex(pattern=r"^拼好饭$", priority=1)
+async def pin(bot: Bot, event: GroupMessageEvent, state: T_State):
+    user_id = event.get_user_id()
+    current_time = time.time()
+    at = MessageSegment.at(event.get_user_id())
+
+    if user_id in cooldown_tracker:
+        last_used = cooldown_tracker[user_id]
+        if current_time - last_used < cooldown_period:
+            remaining_time = cooldown_period - (current_time - last_used)
+            await pinhaofan.finish()
+    cooldown_tracker[user_id] = current_time
+
+    if not Config.activate_eat:
+        await pinhaofan.finish()
+    Total_Assult_food = f"{random.choice(Config.Total_Assault_difficulty)}难度的{random.choice(Config.Total_Assault_bosslist)}。"
+    randFood =random.choice(Config.food + Config.stu)
+    selected_food = random.choices([randFood, Total_Assult_food], weights=[70, 30], k=1)[0]
+    msg = f" 您与{random.randint(1,1052)}位群友一起拼到了{selected_food}，为您节省了{round(random.uniform(1,20),2)}元。"
+    await pinhaofan.finish(message=Message([at,msg]))
