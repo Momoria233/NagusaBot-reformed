@@ -1,19 +1,19 @@
+import asyncio
+import json
+import os
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from typing import List
-import requests
-import asyncio
+
 import pytz
-import json
-import os
-from nonebot.adapters.onebot.v11 import Bot
-from nonebot import get_driver
-from nonebot import get_bot
-from nonebot import require
-from nonebot import logger
+import requests
+from nonebot import get_bot, get_driver, logger, on_command, require
+from nonebot.adapters.onebot.v11 import Bot, Message
+from nonebot.params import CommandArg
 
 require("nonebot_plugin_apscheduler")
 from nonebot_plugin_apscheduler import scheduler
+
 from .config import Config
 
 
@@ -99,3 +99,30 @@ async def report_birthday():
 
     next_date: datetime = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
     logger.info(f"Next action will occur at {next_date.strftime("%a %b %d %Y %H:%M:%S GMT%z (%Z)")}")
+
+
+debug_command = on_command("debug_birthday", priority=10)
+
+
+@debug_command.handle()
+async def debug_command_handler(args: Message = CommandArg()):
+    if date := args.extract_plain_text():
+        month: int = int(date.split("/")[0])
+        day: int = int(date.split("/")[1])
+        now: datetime = datetime.now(tz)
+        test_date: datetime = now.replace(month=month, day=day)
+
+        res = await update_config()
+        if not res:
+            logger.error("Skip this action")
+            return
+
+        with ThreadPoolExecutor() as executor:
+            loop = asyncio.get_running_loop()
+            students = await loop.run_in_executor(executor, get_birthday, test_date)
+        logger.info(f"Today's birthday girl: {students}")
+
+        await debug_command.send(f"老师，今天是{students}的生日，让我们祝她生日快乐！")
+
+    else:
+        await debug_command.finish("please enter the date (month/day)")
