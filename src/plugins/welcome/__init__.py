@@ -1,9 +1,13 @@
-from nonebot.typing import T_State
-from nonebot.adapters.onebot.v11 import Bot, Message, MessageSegment, GroupIncreaseNoticeEvent  # type: ignore
-from nonebot import on_notice
-from nonebot import logger
-
 import re
+
+from nonebot import logger, on_notice
+from nonebot.adapters.onebot.v11 import (
+    Bot,
+    GroupIncreaseNoticeEvent,
+    Message,
+    MessageSegment,
+)
+from nonebot.typing import T_State
 
 from .config import Config
 

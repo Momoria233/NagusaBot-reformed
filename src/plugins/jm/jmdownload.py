@@ -1,10 +1,12 @@
-from typing import Tuple
-import jmcomic
-import os
 import asyncio
+import os
 import shutil
 from concurrent.futures import ThreadPoolExecutor
+from typing import Tuple
+
+import jmcomic
 import jmcomic.jm_exception
+
 from .config import Config
 
 

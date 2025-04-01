@@ -1,13 +1,17 @@
-from nonebot.rule import to_me
-from nonebot.plugin import on_command
-from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, PrivateMessageEvent, MessageSegment, Message # type: ignore
+from nonebot import get_driver, logger
+from nonebot.adapters.onebot.v11 import (
+    Bot,
+    GroupMessageEvent,
+    Message,
+    MessageSegment,
+    PrivateMessageEvent,
+)
 from nonebot.params import CommandArg
-from nonebot import get_driver
-from nonebot import logger
+from nonebot.plugin import on_command
+from nonebot.rule import to_me
 
-
-from .jmdownload import jm_download, jm_init
 from .config import Config
+from .jmdownload import jm_download, jm_init
 
 driver = get_driver()
 

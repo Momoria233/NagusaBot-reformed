@@ -1,13 +1,23 @@
-import random, os, time
-from nonebot import on_notice, on_regex
+import os
+import random
+import time
+
+from nonebot import logger, on_notice, on_regex
+from nonebot.adapters.onebot.v11 import (
+    Bot,
+    GroupMessageEvent,
+    LuckyKingNotifyEvent,
+    Message,
+    MessageSegment,
+    PokeNotifyEvent,
+)
 from nonebot.typing import T_State
-from nonebot import logger
-from nonebot.adapters.onebot.v11 import PokeNotifyEvent, LuckyKingNotifyEvent, GroupMessageEvent
-from nonebot.adapters.onebot.v11 import Bot, Message, MessageSegment
+
 from .config import Config
 
 cooldown_tracker = {}
 cooldown_period = Config.cooldown_period
+
 
 def usr_cd_check(user_id: str) -> bool:
     current_time = time.time()
@@ -18,7 +28,9 @@ def usr_cd_check(user_id: str) -> bool:
     cooldown_tracker[user_id] = current_time
     return True
 
+
 EatL = on_regex(pattern=r"^吃饭$", priority=1)
+
 
 @EatL.handle()
 async def Eat(bot: Bot, event: GroupMessageEvent, state: T_State):
@@ -34,7 +46,9 @@ async def Eat(bot: Bot, event: GroupMessageEvent, state: T_State):
     msg = f" 吃到了{selected_food}。"
     await EatL.finish(message=Message([at, msg]))
 
+
 Start_TotalAst = on_regex(pattern=r"^开票$", priority=1)
+
 
 @Start_TotalAst.handle()
 async def StartTotalAst(bot: Bot, event: GroupMessageEvent, state: T_State):
@@ -49,7 +63,9 @@ async def StartTotalAst(bot: Bot, event: GroupMessageEvent, state: T_State):
     Total_Assault = f" 打了{selected_difficulty}难度的{random.choice(Config.Total_Assault_bosslist)}，{random.choice(opt)}了。"
     await Start_TotalAst.finish(message=Message([at, Total_Assault]))
 
+
 pokeReact = on_notice()
+
 
 @pokeReact.handle()
 async def pokeReaction(bot: Bot, event: PokeNotifyEvent, state: T_State):
@@ -60,7 +76,9 @@ async def pokeReaction(bot: Bot, event: PokeNotifyEvent, state: T_State):
         msg = MessageSegment.text(" " + random.choice(Config.react))
         await pokeReact.finish(message=Message([at, msg]))
 
+
 RPluckyKing = on_notice()
+
 
 @RPluckyKing.handle()
 async def RPluckyKingFunc(bot: Bot, event: LuckyKingNotifyEvent, state: T_State):
@@ -70,7 +88,9 @@ async def RPluckyKingFunc(bot: Bot, event: LuckyKingNotifyEvent, state: T_State)
     msg = MessageSegment.text(" " + random.choice(Config.Congrats))
     await pokeReact.finish(message=Message([at, msg]))
 
+
 nao = on_regex(pattern=r"^闹了$", priority=1)
+
 
 @nao.handle()
 async def naoL(bot: Bot, event: GroupMessageEvent, state: T_State):
@@ -83,7 +103,9 @@ async def naoL(bot: Bot, event: GroupMessageEvent, state: T_State):
     else:
         await nao.finish()
 
+
 aiyou = on_regex(pattern=r"^哎呦$", priority=1)
+
 
 @aiyou.handle()
 async def aiyouL(bot: Bot, event: GroupMessageEvent, state: T_State):
@@ -97,7 +119,9 @@ async def aiyouL(bot: Bot, event: GroupMessageEvent, state: T_State):
     else:
         await aiyou.finish()
 
+
 aiai = on_regex(pattern=r"^唉唉$", priority=1)
+
 
 @aiai.handle()
 async def aiaiL(bot: Bot, event: GroupMessageEvent, state: T_State):
@@ -114,7 +138,9 @@ async def aiaiL(bot: Bot, event: GroupMessageEvent, state: T_State):
     else:
         await aiai.finish()
 
+
 zhalan = on_regex(pattern=r"^栅栏$", priority=1)
+
 
 @zhalan.handle()
 async def zhalanL(bot: Bot, event: GroupMessageEvent, state: T_State):
@@ -127,7 +153,9 @@ async def zhalanL(bot: Bot, event: GroupMessageEvent, state: T_State):
     else:
         await zhalan.finish()
 
+
 pinhaofan = on_regex(pattern=r"^拼好饭$", priority=1)
+
 
 @pinhaofan.handle()
 async def pin(bot: Bot, event: GroupMessageEvent, state: T_State):

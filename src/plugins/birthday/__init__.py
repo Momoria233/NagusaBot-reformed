@@ -36,6 +36,7 @@ async def update_config():
         logger.warning("Data update failed, using cache instead.")
     return True
 
+
 start_date = None
 driver = get_driver()
 
@@ -95,7 +96,7 @@ async def report_birthday():
         logger.critical("Bot not found")
         return
     for id in Config.target_group_id:
-        bot.send_group_msg(group_id=id, message=f"老师，今天是{students}的生日，让我们祝她生日快乐！")  # TODO 换装去重
+        await bot.send_group_msg(group_id=id, message=f"老师，今天是{students}的生日，让我们祝她生日快乐！")  # TODO 换装去重
 
     next_date: datetime = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
     logger.info(f"Next action will occur at {next_date.strftime("%a %b %d %Y %H:%M:%S GMT%z (%Z)")}")
