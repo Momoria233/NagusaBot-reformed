@@ -57,7 +57,7 @@ def get_birthday(now: datetime) -> List[str]:
 
     students: List[str] = []
     with open(Config.data_path, "r", encoding="utf-8") as file:
-        data = json.load(file.read())
+        data = json.load(file)
     for student in data:
         birthday: str = student["BirthDay"]
         name: str = student["PersonalName"]
