@@ -1,6 +1,7 @@
 import os
 import random
 import time
+from datetime import datetime
 
 from nonebot import logger, on_notice, on_regex
 from nonebot.adapters.onebot.v11 import (
@@ -167,6 +168,9 @@ async def pin(bot: Bot, event: GroupMessageEvent, state: T_State):
         await pinhaofan.finish()
     if random.random() < 0.05:
         msg = f" {at} 你的拼好饭被偷了！"
+        await pinhaofan.finish(message=Message([msg]))
+    if random.random() < 0.03:
+        msg = f" {at} 很遗憾，人数太少拼团失败了"
         await pinhaofan.finish(message=Message([msg]))
     Total_Assult_food = f"{random.choice(Config.Total_Assault_difficulty)}难度的{random.choice(Config.Total_Assault_bosslist)}"
     randFood = random.choice(Config.food + Config.stu)
