@@ -91,14 +91,14 @@ async def report_birthday():
     with ThreadPoolExecutor() as executor:
         loop = asyncio.get_running_loop()
         students = await loop.run_in_executor(executor, get_birthday, now)
-    logger.info(f"Today's birthday girl: {students}")
+    logger.info(f"Today's birthday student: {students}")
 
     bot = get_bot()
     if not isinstance(bot, Bot):
         logger.critical("Bot not found")
         return
     for id in Config.target_group_id:
-        await bot.send_group_msg(group_id=id, message=f"老师，今天是{students}的生日，让我们祝她生日快乐！")  # TODO 换装去重
+        await bot.send_group_msg(group_id=id, message=f"老师，今天是{', '.join(students)}的生日，让我们祝她生日快乐！")  # TODO 换装去重
 
     next_date: datetime = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
     logger.info(f"Next action will occur at {next_date.strftime("%a %b %d %Y %H:%M:%S GMT%z (%Z)")}")
@@ -123,9 +123,9 @@ async def debug_command_handler(args: Message = CommandArg()):
         with ThreadPoolExecutor() as executor:
             loop = asyncio.get_running_loop()
             students = await loop.run_in_executor(executor, get_birthday, test_date)
-        logger.info(f"Today's birthday girl: {students}")
+        logger.info(f"Today's birthday student: {students}")
 
-        await debug_command.send(f"老师，今天是{students}的生日，让我们祝她生日快乐！")
+        await debug_command.send(f"老师，今天是{', '.join(students)}的生日，让我们祝她生日快乐！")
 
     else:
         await debug_command.finish("please enter the date (month/day)")
