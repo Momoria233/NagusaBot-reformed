@@ -61,7 +61,7 @@ def get_birthday(now: datetime) -> List[str]:
     for student in data:
         birthday: str = student["BirthDay"]
         name: str = student["PersonalName"]
-        if "（" in name or "）" in name:
+        if student in name:
             logger.warning(f"Skipping student {name} due to the same student.")
             continue
         try:
