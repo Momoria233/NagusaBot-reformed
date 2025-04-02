@@ -56,14 +56,16 @@ def get_birthday(now: datetime) -> List[str]:
     now_day: int = now.day
 
     students: List[str] = []
+    s_students: set = set()
     with open(Config.data_path, "r", encoding="utf-8") as file:
         data = json.load(file)
     for student in data:
         birthday: str = student["BirthDay"]
         name: str = student["PersonalName"]
-        if student in name:
-            logger.warning(f"Skipping student {name} due to the same student.")
+        if name in s_students:  # 检查是否已经处理过该学生
+            logger.warning(f"Skipping duplicate student {name}.")
             continue
+        s_students.add(name)
         try:
             month: int = int(birthday.split("/")[0])
             day: int = int(birthday.split("/")[1])
