@@ -165,6 +165,9 @@ async def pin(bot: Bot, event: GroupMessageEvent, state: T_State):
         await pinhaofan.finish()
     if not Config.activate_eat:
         await pinhaofan.finish()
+    if random.random() < 0.05:
+        msg = f" {at} 你的拼好饭被偷了！"
+        await pinhaofan.finish(message=Message([msg]))
     Total_Assult_food = f"{random.choice(Config.Total_Assault_difficulty)}难度的{random.choice(Config.Total_Assault_bosslist)}"
     randFood = random.choice(Config.food + Config.stu)
     selected_food = random.choices([randFood, Total_Assult_food], weights=[70, 30], k=1)[0]
