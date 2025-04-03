@@ -46,8 +46,9 @@ async def init_func():
     await update_config()
     global start_date, tz
     tz = pytz.timezone("Asia/Shanghai")
-    start_date = datetime.now(tz).replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-    logger.info(f"Next action will occur at {start_date.strftime("%a %b %d %Y %H:%M:%S GMT%z (%Z)")}")
+    now = datetime.now(tz)
+    start_date = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+    logger.info(f"Next action will occur at {start_date.strftime('%a %b %d %Y %H:%M:%S GMT%z (%Z)')}")
 
 
 def get_birthday(now: datetime) -> List[str]:
@@ -98,7 +99,7 @@ async def report_birthday():
         logger.critical("Bot not found")
         return
     for id in Config.target_group_id:
-        await bot.send_group_msg(group_id=id, message=f"老师，今天是{', '.join(students)}的生日，让我们祝她生日快乐！")  # TODO 换装去重
+        await bot.send_group_msg(group_id=id, message=f"老师，今天是{', '.join(students)}的生日，让我们祝她生日快乐！")
 
     next_date: datetime = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
     logger.info(f"Next action will occur at {next_date.strftime("%a %b %d %Y %H:%M:%S GMT%z (%Z)")}")
