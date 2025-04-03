@@ -1,6 +1,16 @@
+import os
+from datetime import datetime
+
 import nonebot
+import pytz
+from nonebot import logger
 from nonebot.adapters.onebot.v11 import Adapter as ONEBOT_V11Adapter
 
+if not os.path.exists("./logs/") and os.path.isdir("./logs/"):
+    os.mkdir("./logs/")
+
+logger.add(f'./logs/{datetime.now(pytz.timezone("Asia/Shanghai")).strftime("%a %b %d %Y %H:%M:%S GMT%z (%Z)")}.log', level="DEBUG")
+logger.add(f'./logs/{datetime.now(pytz.timezone("Asia/Shanghai")).strftime("%a %b %d %Y %H:%M:%S GMT%z (%Z)")}.error', level="ERROR")
 nonebot.init()
 
 driver = nonebot.get_driver()
