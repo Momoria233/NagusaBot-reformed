@@ -155,7 +155,7 @@ async def zhalanL(bot: Bot, event: GroupMessageEvent, state: T_State):
         await zhalan.finish()
 
 
-haqi = on_regex(pattern=r"哈气|哈氣|蛤气|哈気|哈汽|啥气|あくびをする|蛤氣|噺气", priority=1)
+haqi = on_regex(pattern=r"哈气|哈氣|蛤气|哈気|哈汽|啥气|あくびをする|24|噺气", priority=1)
 
 
 @haqi.handle()
