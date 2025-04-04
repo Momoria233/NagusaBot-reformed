@@ -16,6 +16,7 @@ from nonebot_plugin_apscheduler import scheduler
 
 from .config import Config
 
+global tz
 
 async def update_config():
     logger.info("Updating students data...")
