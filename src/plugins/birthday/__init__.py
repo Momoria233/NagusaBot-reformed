@@ -35,6 +35,7 @@ async def update_config():
         logger.warning("Data update failed, using cache instead.")
     return True
 
+driver = get_driver()
 start_date = None
 
 
