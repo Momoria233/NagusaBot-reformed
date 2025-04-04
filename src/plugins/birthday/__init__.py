@@ -36,8 +36,8 @@ async def update_config():
         logger.warning("Data update failed, using cache instead.")
     return True
 
-
-start_date = None
+now: datetime = datetime.now(tz)
+start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
 driver = get_driver()
 
 
