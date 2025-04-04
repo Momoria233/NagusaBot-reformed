@@ -155,6 +155,21 @@ async def zhalanL(bot: Bot, event: GroupMessageEvent, state: T_State):
         await zhalan.finish()
 
 
+haqi = on_regex(pattern=r"哈气", priority=1)
+
+
+@haqi.handle()
+async def haqiL(bot: Bot, event: GroupMessageEvent, state: T_State):
+    user_id = event.get_user_id()
+    at = MessageSegment.at(user_id)
+    if not usr_cd_check(user_id):
+        await haqi.finish()
+    if event.group_id in Config.ai_group_whitelist:
+        msg = " 哈气要交税！"
+        await haqi.finish(message=Message([at, msg]))
+    else:
+        await haqi.finish()
+
 pinhaofan = on_regex(pattern=r"^拼好饭$", priority=1)
 
 
