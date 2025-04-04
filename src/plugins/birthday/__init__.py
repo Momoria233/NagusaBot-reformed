@@ -84,6 +84,9 @@ async def report_birthday():
     global tz
     now: datetime = datetime.now(tz)
 
+    logger.info(f"starting in: {now.strftime('%a %b %d %Y %H:%M:%S GMT%z (%Z)')}")
+    logger.info(f"Next action in scheduler.scheduled_job will be starting in {next_date.strftime("%a %b %d %Y %H:%M:%S GMT%z (%Z)")}")
+
     res = await update_config()
     if not res:
         logger.error("Skip this action")
