@@ -16,8 +16,6 @@ from nonebot_plugin_apscheduler import scheduler
 
 from .config import Config
 
-global tz
-
 async def update_config():
     logger.info("Updating students data...")
     try:
@@ -37,9 +35,7 @@ async def update_config():
         logger.warning("Data update failed, using cache instead.")
     return True
 
-now: datetime = datetime.now(tz)
-start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
-driver = get_driver()
+start_date = None
 
 
 @driver.on_startup
