@@ -2,7 +2,6 @@
 import os
 import random
 import time
-from datetime import datetime
 
 from nonebot import logger, on_notice, on_regex
 from nonebot.adapters.onebot.v11 import (
