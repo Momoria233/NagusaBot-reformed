@@ -50,9 +50,8 @@ async def Eat(bot: Bot, event: GroupMessageEvent, state: T_State):
 
 Touxiang = on_regex(pattern=r"^投降$", priority=1)
 
-
 @Touxiang.handle()
-async def Touxiang(bot: Bot, event: GroupMessageEvent, state: T_State):
+async def TouxiangL(bot: Bot, event: GroupMessageEvent, state: T_State):
     user_id = event.get_user_id()
     if not usr_cd_check(user_id):
         await Touxiang.finish()
