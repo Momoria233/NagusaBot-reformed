@@ -48,6 +48,17 @@ async def Eat(bot: Bot, event: GroupMessageEvent, state: T_State):
     await EatL.finish(message=Message([at, msg]))
 
 
+Touxiang = on_regex(pattern=r"^吃饭$", priority=1)
+
+
+@Touxiang.handle()
+async def Touxiang(bot: Bot, event: GroupMessageEvent, state: T_State):
+    user_id = event.get_user_id()
+    if not usr_cd_check(user_id):
+        await Touxiang.finish()
+    msg = "🏳"
+    await Touxiang.finish(message=Message([msg]))
+
 Start_TotalAst = on_regex(pattern=r"^开票$", priority=1)
 
 
