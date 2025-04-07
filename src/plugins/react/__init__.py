@@ -48,7 +48,7 @@ async def Eat(bot: Bot, event: GroupMessageEvent, state: T_State):
     await EatL.finish(message=Message([at, msg]))
 
 
-Touxiang = on_regex(pattern=r"^吃饭$", priority=1)
+Touxiang = on_regex(pattern=r"^投降$", priority=1)
 
 
 @Touxiang.handle()
