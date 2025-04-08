@@ -110,6 +110,8 @@ async def naoL(bot: Bot, event: GroupMessageEvent, state: T_State):
     if not usr_cd_check(user_id):
         await nao.finish()
     if event.group_id in Config.ai_group_whitelist:
+        if user_id == "853215637":
+            await nao.finish(messgae=Message([at," 就算是大王也不许闹！"]))
         await nao.finish(message=Message([at, MessageSegment.image(os.path.join(os.path.dirname(os.path.abspath(__file__)), "naole.png"))]))
     else:
         await nao.finish()
