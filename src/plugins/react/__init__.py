@@ -22,6 +22,8 @@ cooldown_period = Config.cooldown_period
 
 def usr_cd_check(user_id: str) -> bool:
     current_time = time.time()
+    if user_id in Config.cooldown_whitelist:
+        return True
     if user_id in cooldown_tracker:
         last_used = cooldown_tracker[user_id]
         if current_time - last_used < cooldown_period:

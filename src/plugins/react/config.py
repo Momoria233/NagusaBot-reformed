@@ -1,5 +1,6 @@
 class Config:
-    cooldown_period = 10
+    cooldown_period = 20
+    cooldown_whitelist = ["2447209382"]
     activate_eat = True
     activate_TotalAst = True
     food = [
@@ -30,7 +31,8 @@ class Config:
         "非洲之心",
         "可口小萝卜",
         "可口小白菜",
-        "瓦罐泡面"
+        "瓦罐泡面",
+        "四重的奏"
     ]
     stu = [
         "名草",
