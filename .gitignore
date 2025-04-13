@@ -9,6 +9,7 @@ __pycache__/
 cache
 logs
 .vscode
+src/plugins/llmPlugin/apikey.json
 
 # C extensions
 *.so

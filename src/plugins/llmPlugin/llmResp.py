@@ -2,8 +2,13 @@ from openai import OpenAI
 import json
 import os
 
+api_key_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "apikey.json")
+with open(api_key_path, 'r', encoding='utf-8') as f:
+    api_key_data = json.load(f)
+    api_key = api_key_data.get("api_key")
+
 client = OpenAI(
-    api_key = "sk-43fcfecd08834873a61970157d4103a4",
+    api_key = api_key,
     base_url="https://dashscope.aliyuncs.com/compatible-mode/v1"
 )
 
