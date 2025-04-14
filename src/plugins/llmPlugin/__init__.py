@@ -59,8 +59,8 @@ last_cmd = on_command("rev",priority=5, block=True)
 @last_cmd.handle()
 async def handle_last_command(bot: Bot, event: GroupMessageEvent, matcher: Matcher, args: Message = CommandArg()):
     group_id = event.group_id
-    if not event.user_id in Config.usr_whitelist:
-        await matcher.finish()
+    # if not event.user_id in Config.usr_whitelist:
+    #     await matcher.finish()
 
     try:
         n = int(str(args).strip()) if str(args).strip() else 5
