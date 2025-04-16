@@ -10,6 +10,7 @@ cache
 logs
 .vscode
 src/plugins/llmPlugin/apikey.json
+src/plugins/NewReact/apikey.json
 
 # C extensions
 *.so
