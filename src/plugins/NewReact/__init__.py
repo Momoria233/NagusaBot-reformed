@@ -119,14 +119,14 @@ async def Eat(bot: Bot, event: GroupMessageEvent, state: T_State):
         await EatL.finish()
     Total_Assult_food = f"{random.choice(Config.Total_Assault_difficulty)}难度的{random.choice(Config.Total_Assault_bosslist)}"
     randFood = random.choice(Config.food + Config.stu)
-    selected_food = random.choices([randFood, Total_Assult_food], weights=[70, 30], k=1)[0]
+    selected_food = random.choices([randFood, Total_Assult_food], weights=[80, 20], k=1)[0]
     msg = f" 吃到了{selected_food}。"
     await EatL.finish(message=Message([at, msg]))
 
 
 Touxiang = on_regex(pattern=r"^投降$", priority=1)
 
-@Touxiang.handle() 
+@Touxiang.handle()
 async def TouxiangL(bot: Bot, event: GroupMessageEvent, state: T_State):
     user_id = event.get_user_id()
     if not usr_cd_check(user_id):
@@ -291,6 +291,6 @@ async def pin(bot: Bot, event: GroupMessageEvent, state: T_State):
         await pinhaofan.finish(message=Message([msg]))
     Total_Assult_food = f"{random.choice(Config.Total_Assault_difficulty)}难度的{random.choice(Config.Total_Assault_bosslist)}"
     randFood = random.choice(Config.food + Config.stu)
-    selected_food = random.choices([randFood, Total_Assult_food], weights=[70, 30], k=1)[0]
+    selected_food = random.choices([randFood, Total_Assult_food], weights=[80, 20], k=1)[0]
     msg = f" 您与{random.randint(1,1052)}位群友一起拼到了{selected_food}，为您节省了{round(random.uniform(1,20),2)}元。"
     await pinhaofan.finish(message=Message([at, msg]))
