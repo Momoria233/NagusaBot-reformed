@@ -20,7 +20,7 @@ async def get_yulu_response(chat_history):
     # 修改系统提示，要求大模型返回文件名和理由
     init_msg = {
         "role": "system",
-        "content": "你是一个群聊助手，需要读取提供的聊天记录，并从以下列表中选择一个最合适的回复对应的文件名返回。同时，请附带选择该文件的理由。文件名和理由之间请输出一个空格用于连接。文件名列表：" + ", ".join(yulu_data)
+        "content": "你是一个群聊助手，需要读取提供的提供的聊天记录，并从以下列表中选择一个最合适的回复对应的文件名返回。不需要解释，只能返回文件名。返回的时候请有一点创意和恶趣味。文件名列表：" + ", ".join(yulu_data)
     }
     messages = [{"role": "user", "content": chat_history}]
     messages.insert(0, init_msg)
@@ -28,17 +28,26 @@ async def get_yulu_response(chat_history):
         model="qwen-turbo",
         messages=messages
     )
-    llm_resp = response.choices[0].message.content.strip()
-    parts = llm_resp.split(" ", 1)
-    file_name = parts[0].strip()
-    reason = parts[1].strip() if len(parts) > 1 else "没有提供理由"
-
-    if file_name in yulu_data:
-        ifIncluded = True
-        return ifIncluded, file_name,reason
+    llm_resp = response.choices[0].message.content
+    if llm_resp in yulu_data:
+        return True, llm_resp
     else:
-        ifIncluded = False
-        return ifIncluded,file_name,reason
+        return False, llm_resp
+
+async def get_yulu_reason(chat_history,respFile):
+    init_msg = {
+        "role": "system",
+        "content": "你是一个群聊助手，需要读取提供的P回复，然后阅读提供的聊天记录。最后以简短有逻辑性的语言输出P回复和聊天记录之间的关系。你的输出要以“笑点解析：”为开头，随后直接输出理由。注意，输出理由的时候不能带有“P回复”这个词。"
+    }
+    msgContent = "P回复：" + respFile + "\n聊天记录：" + chat_history
+    messages = [{"role": "user", "content": msgContent}]
+    messages.insert(0, init_msg)
+    response = client.chat.completions.create(
+        model="qwen-turbo",
+        messages=messages
+    )
+    llm_resp = response.choices[0].message.content
+    return llm_resp
 
 if __name__ == "__main__":
     chat_history = input()

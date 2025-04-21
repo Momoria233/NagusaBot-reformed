@@ -49,7 +49,6 @@ async def download_func(bot: Bot, event: GroupMessageEvent, args: Message = Comm
         text = MessageSegment.text(" " + msg)
         await jmDown.finish(message=Message([reply, at, text]))
 
-
 @jmDown.handle()
 async def download_func(bot: Bot, event: PrivateMessageEvent, args: Message = CommandArg()):
     if not Config.allow_private or event.get_user_id() not in Config.user_whitelist:

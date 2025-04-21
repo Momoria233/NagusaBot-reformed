@@ -16,7 +16,7 @@ from nonebot.adapters.onebot.v11 import (
 )
 from nonebot.typing import T_State
 from nonebot.params import CommandArg
-from .llmResp import get_yulu_response
+from .llmResp import get_yulu_response, get_yulu_reason
 from .config import Config
 from .llmCensor import *
 import re
@@ -56,10 +56,10 @@ async def record_message_handle(event: GroupMessageEvent):
     if len(group_message_history[group_id]) > MAX_HISTORY:
         group_message_history[group_id].pop(0)
 
-last_cmd = on_command("rev",priority=5, block=True)
+revL = on_command("rev",priority=5, block=True)
 
-@last_cmd.handle()
-async def handle_last_command(bot: Bot, event: GroupMessageEvent, matcher: Matcher, args: Message = CommandArg()):
+@revL.handle()
+async def rev(bot: Bot, event: GroupMessageEvent, matcher: Matcher, args: Message = CommandArg()):
     group_id = event.group_id
     # if not event.user_id in Config.usr_whitelist:
     #     await matcher.finish()
@@ -67,7 +67,7 @@ async def handle_last_command(bot: Bot, event: GroupMessageEvent, matcher: Match
     try:
         n = int(str(args).strip()) if str(args).strip() else 5
     except ValueError:
-        await matcher.finish(message=Message("格式错误，请输入 /last [数字]"))
+        await matcher.finish(message=Message("格式错误，请输入 /rev [数字]"))
 
     last_messages = fetchRecentMsg(group_id, n)
 
@@ -75,18 +75,54 @@ async def handle_last_command(bot: Bot, event: GroupMessageEvent, matcher: Match
         await matcher.finish(messgae=Message("暂无记录"))
 
     output = "\n".join([f"{i+1}. {msg}" for i, msg in enumerate(last_messages)])
-    ifIncluded, llmReply, llmReason = await get_yulu_response(output)
-    reason = MessageSegment.text(f"{llmReason}")
+    ifIncluded, llmReply = await get_yulu_response(output)
     try:
         if ifIncluded == False:
             not_found_path = os.path.normpath(os.path.join(assets_dir,"notFound.jpg"))
-            msg = Message([MessageSegment.image(not_found_path),reason])
+            msg = Message(MessageSegment.image(not_found_path))
         else:
             llm_reply_path = os.path.normpath(os.path.join(assets_dir, "yulu", llmReply))
-            msg = Message([MessageSegment.image(llm_reply_path),reason])
+            msg = Message(MessageSegment.image(llm_reply_path))
         logger.debug(msg)
         logger.debug(llmReply)
-        logger.debug(llmReason)
+        await matcher.finish(message=msg)
+    except nonebot.exception.FinishedException:
+        pass
+    except Exception as e:
+        logger.error(e)
+        await matcher.finish()
+
+revR = on_command("rev-r",priority=5, block=True)
+
+@revR.handle()
+async def revr(bot: Bot, event: GroupMessageEvent, matcher: Matcher, args: Message = CommandArg()):
+    group_id = event.group_id
+    # if not event.user_id in Config.usr_whitelist:
+    #     await matcher.finish()
+
+    try:
+        n = int(str(args).strip()) if str(args).strip() else 5
+    except ValueError:
+        await matcher.finish(message=Message("格式错误，请输入 /rev-r[数字]"))
+
+    last_messages = fetchRecentMsg(group_id, n)
+
+    if not last_messages:
+        await matcher.finish(messgae=Message("暂无记录"))
+
+    output = "\n".join([f"{i+1}. {msg}" for i, msg in enumerate(last_messages)])
+    ifIncluded, llmReply = await get_yulu_response(output)
+    try:
+        if ifIncluded == False:
+            not_found_path = os.path.normpath(os.path.join(assets_dir,"notFound.jpg"))
+            msg = Message(MessageSegment.image(not_found_path))
+        else:
+            llm_reply_path = os.path.normpath(os.path.join(assets_dir, "yulu", llmReply))
+            llmReason = await get_yulu_reason(output, llmReply)
+            msg = Message([MessageSegment.image(llm_reply_path), MessageSegment.text(" " + llmReason)])
+            logger.debug(llmReason)
+        logger.debug(msg)
+        logger.debug(llmReply)
         await matcher.finish(message=msg)
     except nonebot.exception.FinishedException:
         pass
