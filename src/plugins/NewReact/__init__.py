@@ -141,6 +141,18 @@ def usr_cd_check(user_id: str) -> bool:
     cooldown_tracker[user_id] = current_time
     return True
 
+he = on_regex(pattern=r"^我超.*盒$", priority=1)
+@he.handle()
+async def he_handle(bot: Bot, event: GroupMessageEvent, state: T_State):
+    at = MessageSegment.at(event.get_user_id())
+    if not usr_cd_check(event.get_user_id()):
+        await he.finish()
+    try:
+        await he.finish(message=Message([at,MessageSegment.record(file=os.path.join(assets_dir, "he.mp3"))]))
+    except nonebot.exception.FinishedException:
+        pass
+    except Exception as e:
+        logger.error(e)
 
 EatL = on_regex(pattern=r"^吃饭$", priority=1)
 

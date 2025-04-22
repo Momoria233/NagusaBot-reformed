@@ -1,4 +1,5 @@
 class Config:
+    whitelist = []
     group_whitelist = [225173408]
     user_whitelist = [2447209382, 3343752977]
     allow_private = True
