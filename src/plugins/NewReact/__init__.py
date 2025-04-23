@@ -166,8 +166,8 @@ async def Eat(bot: Bot, event: GroupMessageEvent, state: T_State):
     if not Config.activate_eat:
         await EatL.finish()
     Total_Assult_food = f"{random.choice(Config.Total_Assault_difficulty)}难度的{random.choice(Config.Total_Assault_bosslist)}"
-    randFood = random.choice(Config.food + Config.stu)
-    selected_food = random.choices([randFood, Total_Assult_food], weights=[80, 20], k=1)[0]
+    randFood = random.choices([Config.food + Config.stu],weights=[40,60], k=1)[0]
+    selected_food = random.choices([randFood, Total_Assult_food], weights=[85, 15], k=1)[0]
     msg = f" 吃到了{selected_food}。"
     await EatL.finish(message=Message([at, msg]))
 
@@ -237,7 +237,7 @@ async def naoL(bot: Bot, event: GroupMessageEvent, state: T_State):
         await nao.finish()
     if event.group_id in Config.ai_group_whitelist:
         if user_id == "853215637":
-            await nao.finish(messgae=Message([at," 就算是大王也不许闹！"]))
+            await nao.finish(message=Message([at," 就算是大王也不许闹！"]))
         await nao.finish(message=Message([at, MessageSegment.image(os.path.join(assets_dir, "naole.png"))]))
     else:
         await nao.finish()
@@ -338,7 +338,7 @@ async def pin(bot: Bot, event: GroupMessageEvent, state: T_State):
         msg = f" {at} 很遗憾，人数太少拼团失败了"
         await pinhaofan.finish(message=Message([msg]))
     Total_Assult_food = f"{random.choice(Config.Total_Assault_difficulty)}难度的{random.choice(Config.Total_Assault_bosslist)}"
-    randFood = random.choice(Config.food + Config.stu)
-    selected_food = random.choices([randFood, Total_Assult_food], weights=[80, 20], k=1)[0]
+    randFood = random.choices([Config.food + Config.stu],weights=[40,60], k=1)[0]
+    selected_food = random.choices([randFood, Total_Assult_food], weights=[85, 15], k=1)[0]
     msg = f" 您与{random.randint(1,1052)}位群友一起拼到了{selected_food}，为您节省了{round(random.uniform(1,20),2)}元。"
     await pinhaofan.finish(message=Message([at, msg]))
