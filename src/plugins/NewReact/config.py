@@ -35,7 +35,7 @@ class Config:
         "土豆丝炒姜丝",
         "生姜鸡块",
         ".300 BLK",
-        "7.62x51mm M993"
+        "7.62x51mm M993",
         "6.8x51mm Hybrid",
         ".50 BMG",
         ".338 lapua magnum",
