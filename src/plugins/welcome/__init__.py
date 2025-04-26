@@ -8,9 +8,10 @@ from nonebot.adapters.onebot.v11 import (
     MessageSegment,
 )
 from nonebot.typing import T_State
-
+import os
 from .config import Config
 
+assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 NewWelcome = on_notice()
 
 
@@ -30,6 +31,8 @@ async def welcoming(bot: Bot, event: GroupIncreaseNoticeEvent, state: T_State):
                 case "at":
                     message_list.append(MessageSegment.at(event.get_user_id()))
                 case str() as string if re.match(r"img:(.*)", string):
-                    message_list.append(MessageSegment.image(re.match(r"img:(.*)", string).group(1)))
+                    logger.info(re.match(r"img:(.*)", string).group(1))
+                    logger.info(os.path.join(assets_dir, re.match(r"img:(.*)", string).group(1)))
+                    message_list.append(MessageSegment.image(os.path.join(assets_dir,re.match(r"img:(.*)", string).group(1))))
 
     await NewWelcome.finish(Message(message_list))
