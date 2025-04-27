@@ -21,7 +21,7 @@ from nonebot.params import CommandArg
 
 from .getGroupConfig import *
 
-groupfwdmsg = on_command("help",rule=to_me(), priority=1)
+groupfwdmsg = on_command("help",aliases={"帮助"},priority=1)
 
 assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 
@@ -35,14 +35,14 @@ async def groupfwdmsg_handle(bot: Bot, event: GroupMessageEvent, state: T_State)
         logger.error(e)
         await groupfwdmsg.finish(f"json读取错误：{e}")
 
-    ALL_FEATURES = config.get("all_features", {})  # 从config.json读取所有功能和描述
+    ALL_FEATURES = config.get("all_features", {})
 
     if group_id not in config:
-        enabled_features = list(ALL_FEATURES.keys())  # 默认启用所有功能
+        enabled_features = list(ALL_FEATURES.keys())
     else:
         group_config = config[group_id]
         ban_list = group_config.get("ban_list", [])
-        enabled_features = [feature for feature in ALL_FEATURES if feature not in ban_list]  # 排除ban_list中的功能
+        enabled_features = [feature for feature in ALL_FEATURES if feature not in ban_list]
 
     if not enabled_features:
         help_text = ["本群目前没有启用任何功能"]
@@ -55,7 +55,7 @@ async def groupfwdmsg_handle(bot: Bot, event: GroupMessageEvent, state: T_State)
         content.append({
             "type": "text",
             "data": {
-                "text": f"{feature} {description}"  # Add newline for separation
+                "text": f"{feature} {description}"
             }
         })
 
