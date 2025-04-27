@@ -46,6 +46,15 @@ async def init_func():
     tz = pytz.timezone("Asia/Shanghai")
     now = datetime.now(tz)
     start_date = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+
+    # Ensure start_date is *definitely* in the future
+    now = datetime.now(tz)
+    if start_date <= now:
+        start_date = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+
+    # Add a small buffer to ensure it's far enough in the future
+    start_date += timedelta(seconds=5)  # Add a 5-second buffer
+
     logger.info(f"Next action will occur at {start_date.strftime('%a %b %d %Y %H:%M:%S GMT%z (%Z)')}")
 
 
@@ -82,8 +91,10 @@ async def report_birthday():
     global tz
     now: datetime = datetime.now(tz)
 
-    logger.info(f"starting in: {now.strftime('%a %b %d %Y %H:%M:%S GMT%z (%Z)')}")
-    logger.info(f"Next action in scheduler.scheduled_job will be starting in {next_date.strftime("%a %b %d %Y %H:%M:%S GMT%z (%Z)")}")
+    next_date: datetime = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1) # Define next_date here
+
+    logger.info(f"report_birthday started at: {now.strftime('%a %b %d %Y %H:%M:%S GMT%z (%Z)')}")
+    logger.info(f"Next action in scheduler.scheduled_job will be starting in {next_date.strftime('%a %b %d %Y %H:%M:%S GMT%z (%Z)')}")
 
     res = await update_config()
     if not res:
@@ -102,8 +113,7 @@ async def report_birthday():
     for id in Config.target_group_id:
         await bot.send_group_msg(group_id=id, message=f"老师，今天是{', '.join(students)}的生日，让我们祝她生日快乐！")
 
-    next_date: datetime = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-    logger.info(f"Next action will occur at {next_date.strftime("%a %b %d %Y %H:%M:%S GMT%z (%Z)")}")
+    logger.info(f"Next action will occur at {next_date.strftime('%a %b %d %Y %H:%M:%S GMT%z (%Z)')}")
 
 
 debug_command = on_command("debug_birthday", priority=10)
