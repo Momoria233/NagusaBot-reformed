@@ -88,11 +88,7 @@ def get_birthday(now: datetime) -> List[str]:
 
 @scheduler.scheduled_job("interval", days=1, start_date=start_date, id="job_birthday")
 async def report_birthday():
-    global tz
-    now: datetime = datetime.now(tz)
-
     next_date: datetime = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1) # Define next_date here
-
     logger.info(f"report_birthday started at: {now.strftime('%a %b %d %Y %H:%M:%S GMT%z (%Z)')}")
     logger.info(f"Next action in scheduler.scheduled_job will be starting in {next_date.strftime('%a %b %d %Y %H:%M:%S GMT%z (%Z)')}")
 
