@@ -13,6 +13,7 @@ from nonebot.params import CommandArg
 
 require("nonebot_plugin_apscheduler")
 from nonebot_plugin_apscheduler import scheduler
+from apscheduler.triggers.cron import CronTrigger
 
 from .config import Config
 
@@ -35,27 +36,22 @@ async def update_config():
         logger.warning("Data update failed, using cache instead.")
     return True
 
+global start_date, tz
+tz = pytz.timezone("Asia/Shanghai")
 driver = get_driver()
-start_date = None
-
+now = datetime.now(tz)
+start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+logger.info(f"Current Start Date : {start_date.strftime('%a %b %d %Y %H:%M:%S GMT%z (%Z)')}")
 
 @driver.on_startup
 async def init_func():
     await update_config()
-    global start_date, tz
-    tz = pytz.timezone("Asia/Shanghai")
-    now = datetime.now(tz)
-    start_date = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-
-    # Ensure start_date is *definitely* in the future
-    now = datetime.now(tz)
-    if start_date <= now:
-        start_date = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-
-    # Add a small buffer to ensure it's far enough in the future
-    start_date += timedelta(seconds=5)  # Add a 5-second buffer
-
-    logger.info(f"Next action will occur at {start_date.strftime('%a %b %d %Y %H:%M:%S GMT%z (%Z)')}")
+    # global start_date, tz
+    # tz = pytz.timezone("Asia/Shanghai")
+    # now = datetime.now(tz)
+    # start_date = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+    next_date: datetime = start_date + timedelta(days=1)
+    logger.info(f"Next action will occur at {next_date.strftime('%a %b %d %Y %H:%M:%S GMT%z (%Z)')}")
 
 
 def get_birthday(now: datetime) -> List[str]:
@@ -88,7 +84,7 @@ def get_birthday(now: datetime) -> List[str]:
 
 @scheduler.scheduled_job("interval", days=1, start_date=start_date, id="job_birthday")
 async def report_birthday():
-    next_date: datetime = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1) # Define next_date here
+    next_date: datetime = start_date + timedelta(days=1) # Define next_date here
     logger.info(f"report_birthday started at: {now.strftime('%a %b %d %Y %H:%M:%S GMT%z (%Z)')}")
     logger.info(f"Next action in scheduler.scheduled_job will be starting in {next_date.strftime('%a %b %d %Y %H:%M:%S GMT%z (%Z)')}")
 
@@ -101,6 +97,9 @@ async def report_birthday():
         loop = asyncio.get_running_loop()
         students = await loop.run_in_executor(executor, get_birthday, now)
     logger.info(f"Today's birthday student: {students}")
+    if students == []:
+        bot.send_group_msg(group_id=225173408, message="今天没有过生日的学生")
+        await bot.finish()
 
     bot = get_bot()
     if not isinstance(bot, Bot):
@@ -132,6 +131,8 @@ async def debug_command_handler(args: Message = CommandArg()):
             loop = asyncio.get_running_loop()
             students = await loop.run_in_executor(executor, get_birthday, test_date)
         logger.info(f"Today's birthday student: {students}")
+        if students == []:
+            await debug_command.finish("今天没有过生日的学生")
 
         await debug_command.send(f"老师，今天是{', '.join(students)}的生日，让我们祝她生日快乐！")
 

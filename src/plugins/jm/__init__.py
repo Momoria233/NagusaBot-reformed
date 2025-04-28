@@ -49,10 +49,11 @@ async def download_func(bot: Bot, event: GroupMessageEvent, args: Message = Comm
         text = MessageSegment.text(" " + msg)
         await jmDown.finish(message=Message([reply, at, text]))
 
-@jmDown.handle()
+jmPriv = on_command("jm", rule=to_me(), priority=1, block=True)
+@jmPriv.handle()
 async def download_func(bot: Bot, event: PrivateMessageEvent, args: Message = CommandArg()):
     if not Config.allow_private or event.get_user_id() not in Config.user_whitelist:
-        jmDown.skip()
+        jmPriv.skip()
         return
     reply = MessageSegment.reply(event.message_id)
     at = MessageSegment.at(event.get_user_id())
@@ -61,13 +62,13 @@ async def download_func(bot: Bot, event: PrivateMessageEvent, args: Message = Co
         code, msg = await jm_download(number)
         if code != 0:
             text = MessageSegment.text(" " + msg)
-            await jmDown.finish(message=Message([reply, at, text]))
+            await jmPriv.finish(message=Message([reply, at, text]))
         await bot.call_api("upload_private_file", user_id=event.get_user_id(), file=msg, name=f"{number}.pdf")
         msg = "下载成功"
         text = MessageSegment.text(" " + msg)
-        await jmDown.finish(message=Message([reply, at, text]))
+        await jmPriv.finish(message=Message([reply, at, text]))
 
     else:
         msg = "请输入车牌号"
         text = MessageSegment.text(" " + msg)
-        await jmDown.finish(message=Message([reply, at, text]))
+        await jmPriv.finish(message=Message([reply, at, text]))
