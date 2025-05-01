@@ -36,7 +36,6 @@ async def update_config():
         logger.warning("Data update failed, using cache instead.")
     return True
 
-global start_date, tz
 tz = pytz.timezone("Asia/Shanghai")
 driver = get_driver()
 now = datetime.now(tz)
@@ -84,7 +83,8 @@ def get_birthday(now: datetime) -> List[str]:
 
 @scheduler.scheduled_job("interval", days=1, start_date=start_date, id="job_birthday")
 async def report_birthday():
-    next_date: datetime = start_date + timedelta(days=1) # Define next_date here
+    now = datetime.now(tz)
+    next_date: datetime = now + timedelta(days=1)
     logger.info(f"report_birthday started at: {now.strftime('%a %b %d %Y %H:%M:%S GMT%z (%Z)')}")
     logger.info(f"Next action in scheduler.scheduled_job will be starting in {next_date.strftime('%a %b %d %Y %H:%M:%S GMT%z (%Z)')}")
 
@@ -97,14 +97,16 @@ async def report_birthday():
         loop = asyncio.get_running_loop()
         students = await loop.run_in_executor(executor, get_birthday, now)
     logger.info(f"Today's birthday student: {students}")
-    if students == []:
-        bot.send_group_msg(group_id=225173408, message="今天没有过生日的学生")
-        await bot.finish()
 
-    bot = get_bot()
+    bot = get_bot() # Initialize bot here
     if not isinstance(bot, Bot):
         logger.critical("Bot not found")
         return
+
+    if students == []:
+        await bot.send_group_msg(group_id=225173408, message="今天没有过生日的学生")
+        return # Use return instead of bot.finish()
+
     for id in Config.target_group_id:
         await bot.send_group_msg(group_id=id, message=f"老师，今天是{', '.join(students)}的生日，让我们祝她生日快乐！")
 
