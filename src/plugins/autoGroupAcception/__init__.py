@@ -20,7 +20,7 @@ def check_stu_name(input_name):
 
 GroupRequest = on_notice()
 @GroupRequest.handle()
-async def handle_group_request(bot:Bot, event: GroupRequestEvent, state: T_State):
+async def handle_group_request(bot:Bot, event: GroupRequestEvent):
     if not event.group_id in Config.group_whitelist:
         logger.info(f"[autoGroupAcception] Group {event.group_id} not in whitelist")
         await GroupRequest.finish()
