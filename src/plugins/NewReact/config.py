@@ -95,5 +95,5 @@ class Config:
         "老师是手气王，真幸运呢 恭喜",
     ]
 
-    ai_group_whitelist = [225173408, 996101999]
+    ai_group_whitelist = [225173408]
     ai_usr_whitelist = ["2891544717"]
