@@ -44,7 +44,7 @@ logger.info(f"Current Start Date : {start_date.strftime('%a %b %d %Y %H:%M:%S GM
 
 @driver.on_startup
 async def init_func():
-    await update_config()
+    # await update_config()
     # global start_date, tz
     # tz = pytz.timezone("Asia/Shanghai")
     # now = datetime.now(tz)

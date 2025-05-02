@@ -38,7 +38,7 @@ async def record_message_handle(event: GroupMessageEvent):
     group_id = event.group_id
     message = str(event.get_message())
 
-    if "[CQ:image" in message or message.startswith("[CQ:mface]"):
+    if "[CQ:image" in message or message.startswith("[CQ:mface"):
         return
 
     match = re.search(r']\s*(.+)', message)
