@@ -154,6 +154,18 @@ async def he_handle(bot: Bot, event: GroupMessageEvent, state: T_State):
     except Exception as e:
         logger.error(e)
 
+chishiL = on_regex(pattern=r"^吃史$", priority=1)
+@chishiL.handle()
+async def chishi(bot: Bot, event: GroupMessageEvent, state: T_State):
+    user_id = event.get_user_id()
+    at = MessageSegment.at(user_id)
+    if not usr_cd_check(user_id):
+        await chishiL.finish()
+    if not Config.activate_eat:
+        await chishiL.finish()
+    await chishiL.finish(message=Message([at," 吃到了史"]))
+
+
 EatL = on_regex(pattern=r"^吃饭$", priority=1)
 
 
