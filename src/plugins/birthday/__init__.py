@@ -44,7 +44,7 @@ logger.info(f"Current Start Date : {start_date.strftime('%a %b %d %Y %H:%M:%S GM
 
 @driver.on_startup
 async def init_func():
-    # await update_config()
+    await update_config()
     # global start_date, tz
     # tz = pytz.timezone("Asia/Shanghai")
     # now = datetime.now(tz)
@@ -103,11 +103,13 @@ async def report_birthday():
         logger.critical("Bot not found")
         return
 
+
     if students == []:
-        await bot.send_group_msg(group_id=225173408, message="今天没有过生日的学生")
+        await bot.send_private_msg(user_id=2447209382, message="今天没有过生日的学生")
         return # Use return instead of bot.finish()
 
     for id in Config.target_group_id:
+        await bot.send_private_msg(user_id=2447209382, message=f"老师，今天是{', '.join(students)}的生日，让我们祝她生日快乐！")
         await bot.send_group_msg(group_id=id, message=f"老师，今天是{', '.join(students)}的生日，让我们祝她生日快乐！")
 
     logger.info(f"Next action will occur at {next_date.strftime('%a %b %d %Y %H:%M:%S GMT%z (%Z)')}")

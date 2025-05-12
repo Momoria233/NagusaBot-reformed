@@ -236,101 +236,101 @@ async def RPluckyKingFunc(bot: Bot, event: LuckyKingNotifyEvent, state: T_State)
     await pokeReact.finish(message=Message([at, msg]))
 
 
-nao = on_regex(pattern=r"^闹了$", priority=1)
+# nao = on_regex(pattern=r"^闹了$", priority=1)
 
 
-@nao.handle()
-async def naoL(bot: Bot, event: GroupMessageEvent, state: T_State):
-    user_id = event.get_user_id()
-    at = MessageSegment.at(user_id)
-    if not usr_cd_check(user_id):
-        await nao.finish()
-    if llmCensor.recentMsgCensor(fetchRecentMsg(event.group_id,5),"不准闹") == False:
-        await nao.finish()
-    if event.group_id in Config.ai_group_whitelist:
-        if user_id == "853215637":
-            await nao.finish(message=Message([at," 就算是大王也不许闹！"]))
-        await nao.finish(message=Message([at, MessageSegment.image(os.path.join(assets_dir, "naole.png"))]))
-    else:
-        await nao.finish()
+# @nao.handle()
+# async def naoL(bot: Bot, event: GroupMessageEvent, state: T_State):
+#     user_id = event.get_user_id()
+#     at = MessageSegment.at(user_id)
+#     if not usr_cd_check(user_id):
+#         await nao.finish()
+#     if llmCensor.recentMsgCensor(fetchRecentMsg(event.group_id,5),"不准闹") == False:
+#         await nao.finish()
+#     if event.group_id in Config.ai_group_whitelist:
+#         if user_id == "853215637":
+#             await nao.finish(message=Message([at," 就算是大王也不许闹！"]))
+#         await nao.finish(message=Message([at, MessageSegment.image(os.path.join(assets_dir, "naole.png"))]))
+#     else:
+#         await nao.finish()
 
 
-aiyou = on_regex(pattern=r"^哎呦$", priority=1)
+# aiyou = on_regex(pattern=r"^哎呦$", priority=1)
 
 
-@aiyou.handle()
-async def aiyouL(bot: Bot, event: GroupMessageEvent, state: T_State):
-    user_id = event.get_user_id()
-    at = MessageSegment.at(user_id)
-    if not usr_cd_check(user_id):
-        await aiyou.finish()
-    approveRep, llmReason = llmCensor.recentMsgCensor(fetchRecentMsg(event.group_id,5),"不准哎呦")
-    if approveRep == False:
-        Bot.send_private_msg(user_id=2447209382,message=llmReason)
-        await aiyou.finish()
-    if event.group_id in Config.ai_group_whitelist:
-        # logger.info(os.path.join(os.path.dirname(os.path.abspath(__file__)), "buxuaiyou.jpg"))
-        await aiyou.finish(message=Message([at, MessageSegment.image(os.path.join(assets_dir, "buxuaiyou.jpg"))]))
-    else:
-        await aiyou.finish()
+# @aiyou.handle()
+# async def aiyouL(bot: Bot, event: GroupMessageEvent, state: T_State):
+#     user_id = event.get_user_id()
+#     at = MessageSegment.at(user_id)
+#     if not usr_cd_check(user_id):
+#         await aiyou.finish()
+#     approveRep, llmReason = llmCensor.recentMsgCensor(fetchRecentMsg(event.group_id,5),"不准哎呦")
+#     if approveRep == False:
+#         Bot.send_private_msg(user_id=2447209382,message=llmReason)
+#         await aiyou.finish()
+#     if event.group_id in Config.ai_group_whitelist:
+#         # logger.info(os.path.join(os.path.dirname(os.path.abspath(__file__)), "buxuaiyou.jpg"))
+#         await aiyou.finish(message=Message([at, MessageSegment.image(os.path.join(assets_dir, "buxuaiyou.jpg"))]))
+#     else:
+#         await aiyou.finish()
 
 
-aiai = on_regex(pattern=r"^唉唉$", priority=1)
+# aiai = on_regex(pattern=r"^唉唉$", priority=1)
 
 
-@aiai.handle()
-async def aiaiL(bot: Bot, event: GroupMessageEvent, state: T_State):
-    user_id = event.get_user_id()
-    at = MessageSegment.at(user_id)
-    if not usr_cd_check(user_id):
-        await aiai.finish()
-    if event.group_id  not in Config.ai_group_whitelist:
-        await aiai.finish()
-    if user_id in Config.ai_usr_whitelist:
-        await aiai.finish()
-    approveRep, llmReason = llmCensor.recentMsgCensor(fetchRecentMsg(event.group_id,5),"不准唉唉")
-    if approveRep == False:
-        Bot.send_private_msg(user_id=2447209382,message=llmReason)
-        await aiai.finish()
-    else:
-        logger.info(os.path.join(assets_dir, "buzhunaiai.png"))
-        await aiai.finish(message=Message([at, MessageSegment.image(os.path.join(assets_dir, "buzhunaiai.png"))]))
+# @aiai.handle()
+# async def aiaiL(bot: Bot, event: GroupMessageEvent, state: T_State):
+#     user_id = event.get_user_id()
+#     at = MessageSegment.at(user_id)
+#     if not usr_cd_check(user_id):
+#         await aiai.finish()
+#     if event.group_id  not in Config.ai_group_whitelist:
+#         await aiai.finish()
+#     if user_id in Config.ai_usr_whitelist:
+#         await aiai.finish()
+#     approveRep, llmReason = llmCensor.recentMsgCensor(fetchRecentMsg(event.group_id,5),"不准唉唉")
+#     if approveRep == False:
+#         Bot.send_private_msg(user_id=2447209382,message=llmReason)
+#         await aiai.finish()
+#     else:
+#         logger.info(os.path.join(assets_dir, "buzhunaiai.png"))
+#         await aiai.finish(message=Message([at, MessageSegment.image(os.path.join(assets_dir, "buzhunaiai.png"))]))
 
 
 
-zhalan = on_regex(pattern=r"^栅栏$", priority=1)
+# zhalan = on_regex(pattern=r"^栅栏$", priority=1)
 
 
-@zhalan.handle()
-async def zhalanL(bot: Bot, event: GroupMessageEvent, state: T_State):
-    user_id = event.get_user_id()
-    at = MessageSegment.at(user_id)
-    if not usr_cd_check(user_id):
-        await zhalan.finish()
-    if event.group_id in Config.ai_group_whitelist:
-        await zhalan.finish(message=Message([at, MessageSegment.image(os.path.join(assets_dir, "zhalan.jpg"))]))
-    else:
-        await zhalan.finish()
+# @zhalan.handle()
+# async def zhalanL(bot: Bot, event: GroupMessageEvent, state: T_State):
+#     user_id = event.get_user_id()
+#     at = MessageSegment.at(user_id)
+#     if not usr_cd_check(user_id):
+#         await zhalan.finish()
+#     if event.group_id in Config.ai_group_whitelist:
+#         await zhalan.finish(message=Message([at, MessageSegment.image(os.path.join(assets_dir, "zhalan.jpg"))]))
+#     else:
+#         await zhalan.finish()
 
 
-haqi = on_regex(pattern=r"^哈气|哈氣|蛤气|哈気|哈汽|啥气|あくびをする|噺气$", priority=1)
+# haqi = on_regex(pattern=r"^哈气|哈氣|蛤气|哈気|哈汽|啥气|あくびをする|噺气$", priority=1)
 
 
-@haqi.handle()
-async def haqiL(bot: Bot, event: GroupMessageEvent, state: T_State):
-    user_id = event.get_user_id()
-    at = MessageSegment.at(user_id)
-    if not usr_cd_check(user_id):
-        await haqi.finish()
-    approveRep, llmReason = llmCensor.recentMsgCensor(fetchRecentMsg(event.group_id,5),"不准哈气")
-    if approveRep == False:
-        Bot.send_private_msg(user_id=2447209382,message=llmReason)
-        await haqi.finish()
-    if event.group_id in Config.ai_group_whitelist:
-        msg = " 哈气要交税！"
-        await haqi.finish(message=Message([at, msg]))
-    else:
-        await haqi.finish()
+# @haqi.handle()
+# async def haqiL(bot: Bot, event: GroupMessageEvent, state: T_State):
+#     user_id = event.get_user_id()
+#     at = MessageSegment.at(user_id)
+#     if not usr_cd_check(user_id):
+#         await haqi.finish()
+#     approveRep, llmReason = llmCensor.recentMsgCensor(fetchRecentMsg(event.group_id,5),"不准哈气")
+#     if approveRep == False:
+#         Bot.send_private_msg(user_id=2447209382,message=llmReason)
+#         await haqi.finish()
+#     if event.group_id in Config.ai_group_whitelist:
+#         msg = " 哈气要交税！"
+#         await haqi.finish(message=Message([at, msg]))
+#     else:
+#         await haqi.finish()
 
 pinhaofan = on_regex(pattern=r"^拼好饭$", priority=1)
 
