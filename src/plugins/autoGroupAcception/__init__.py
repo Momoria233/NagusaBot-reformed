@@ -18,8 +18,6 @@ def check_stu_name(input_name):
                     input_name == item.get("PersonalName") or
                     item.get("FullName") in input_name):
                     return True
-                # else:
-                #     logger.warning(f"{input_name} not in {item.get('FullName')}, {item.get('FamilyName')}, {item.get('PersonalName')}")
             return False
 
 GroupRequest = on_request(priority=1)
@@ -36,10 +34,10 @@ async def handle_group_request(bot:Bot, event: GroupRequestEvent):
         await event.approve(bot)
         msg = f"[autoGroupAcception] Group {event.group_id} request from {event.user_id} approved"
         logger.info(msg)
-        bot.send_private_msg(user_id=2447209382,message=msg)
+        await bot.send_private_msg(user_id=2447209382,message=msg)
         await GroupRequest.finish()
     else:
         msg = f"[autoGroupAcception] Group {event.group_id} request from {event.user_id} rejected, answer: {answer}"
         logger.info(msg)
-        bot.send_private_msg(user_id=2447209382,message=msg)
+        await bot.send_private_msg(user_id=2447209382,message=msg)
         await GroupRequest.finish()
