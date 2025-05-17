@@ -44,11 +44,9 @@ async def handle_group_request(bot: Bot, event: GroupRequestEvent):
         msg = (f"Group {event.group_id} request from {event.user_id} 匹配失败。 \n申请提示词: {answer}，请在5分钟内回复“是”通过，“否”拒绝。")
         logger.info(msg)
         await bot.send_private_msg(user_id=2447209382, message=msg)
-        # 保存请求信息
         key = f"{event.group_id}_{event.user_id}"
         pending_requests[key] = (bot, event)
         try:
-            # 等待回应，超时5分钟
             result = await asyncio.wait_for(wait_for_reply(key), timeout=300)
             if result == "是":
                 await event.approve(bot)
