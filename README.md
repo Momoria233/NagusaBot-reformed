@@ -41,7 +41,7 @@
 ## tbd
 
 -   [ ] 代码分类/优化可读性以及项目结构
--   [ ] 修复birthday插件
+-   [x] 修复birthday插件
 -   [x] 学生生日播报功能
 -   [x] 根据特定群聊制定不同的welcome内容
 -   [x] 完成naole.py
@@ -50,7 +50,8 @@
 -   [x] 拼好饭被偷功能
 -   [x] 偷别人的拼好饭功能（已取消  因为不好玩
 -   [x] 自动识别学生名字关键词同意入群（已取消 萝北说不用了
--   [ ] 接入llm实现回复消息？（仅限whitelist中
--   [ ] 接入llm实现群友语录查询并自动发送功能
--   [ ] 通过 send_group_forward_msg 做“哎，大手”功能
--   [ ] 通过 send_group_forward_msg 实现搬史 bot（？
+-   [x] 接入llm实现回复消息？（仅限whitelist中
+-   [x] 接入llm实现群友语录查询并自动发送功能
+-   [x] 通过 send_group_forward_msg 做“哎，大手”功能
+-   [x] 通过 send_group_forward_msg 实现搬史 bot（？
+-   [ ] 关联夏莱烤肉屋自动转发
