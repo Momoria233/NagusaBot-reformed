@@ -36,17 +36,17 @@ async def RecallNotice_handle(bot: Bot, event: GroupMessageEvent, state: T_State
     key = key_str(group_id, user_id)
 
     now = datetime.now(tz)
+    if message.extract_plain_text().strip() != "bot撤回一下":
+            logger.info("消息内容不符合要求，忽略。")
+            return
+    else:
+        if event.user_id == 2447209382:
+            await bot.delete_msg(message_id=event.reply.message_id)
+            await RecallNotice.finish("消息已撤回。")
     if replyusr_id not in whitelist or now.hour == 12:
         logger.info("用户不在白名单中或当前时间为12点，忽略。")
         return
     if message.extract_plain_text().strip() != "请注意广告时间":
-        if message.extract_plain_text().strip() != "bot撤回一下":
-            logger.info("消息内容不符合要求，忽略。")
-            return
-        else:
-            if event.user_id == 2447209382:
-                await bot.delete_msg(message_id=event.reply.message_id)
-                await RecallNotice.finish("消息已撤回。")
         logger.info("消息内容不符合要求，忽略。")
         return
 
