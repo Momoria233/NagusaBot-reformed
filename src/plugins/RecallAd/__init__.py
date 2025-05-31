@@ -12,7 +12,7 @@ from nonebot.params import EventMessage
 assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 revokeRec = os.path.join(assets_dir,"revoke_records.json")
 tz = timezone(timedelta(hours=8))
-whitelist = [2447209382, 123456789]  # Replace with actual user IDs
+whitelist = [2447209382, 123456789]
 
 with open(revokeRec, "r", encoding="utf-8") as f:
     revoke_record = json.load(f)
@@ -36,19 +36,20 @@ async def RecallNotice_handle(bot: Bot, event: GroupMessageEvent, state: T_State
     key = key_str(group_id, user_id)
 
     now = datetime.now(tz)
-    # if message.extract_plain_text().strip() != "bot撤回一下":
-    #         logger.info("消息内容不符合要求，忽略。")
-    #         return
-    # else:
-    #     if event.user_id == 2447209382:
-    #         await bot.delete_msg(message_id=event.reply.message_id)
-    #         await RecallNotice.finish("消息已撤回。")
     if replyusr_id not in whitelist or now.hour == 12:
         logger.info("用户不在白名单中或当前时间为12点，忽略。")
         return
     if message.extract_plain_text().strip() != "请注意广告时间":
-        logger.info("消息内容不符合要求，忽略。")
-        return
+            if message.extract_plain_text().strip() != "bot撤回一下":
+                logger.info("消息内容不符合要求，忽略。")
+                return
+            else:
+                if event.user_id == 2447209382:
+                    try:
+                        await bot.delete_msg(message_id=event.reply.message_id)
+                        await RecallNotice.finish("消息已撤回。")
+                    except Exception as e:
+                        await RecallNotice.finish(f"撤回失败：{e}")
 
     try:
         await bot.delete_msg(message_id=event.reply.message_id)
@@ -79,7 +80,6 @@ async def RecallNotice_handle(bot: Bot, event: GroupMessageEvent, state: T_State
         await bot.set_group_ban(group_id=group_id, user_id=user_id, duration=7 * 24 * 60 * 60)
         await RecallNotice.finish("⚠️本群广告时间为12-13点，这是第二次违规，已被禁言 7 天，请注意群规。")
     elif count == 3:
-        await bot.set_group_kick(group_id=group_id, user_id=user_id, reject_add_request=False)
-        await RecallNotice.finish("第三次违规发送广告，已移出群聊。")
+        await RecallNotice.finish("此为第三次违规发送广告，可以被移出群聊。")
     else:
         await bot.send_private_msg(user_id=2447209382, message=f"error occured: {count},{key}")

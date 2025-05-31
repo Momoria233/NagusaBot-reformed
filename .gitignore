@@ -11,7 +11,7 @@ logs
 .vscode
 src/plugins/llmPlugin/apikey.json
 src/plugins/NewReact/apikey.json
-
+src/plugins/bilibiliRepost/assets/cookie.json
 # C extensions
 *.so
 
