@@ -139,7 +139,7 @@ async def check_and_send():
         dynamic_url = f"https://t.bilibili.com/{dynamic_id}"
 
         msg_list = [
-            f"图文动态更新：{dynamic_url}",
+            f"夏莱烤肉屋-动态更新：{dynamic_url}",
             f"{description}" if description else "无文字内容"
         ]
         for pic_url in pictures:
