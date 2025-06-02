@@ -91,7 +91,7 @@ async def check_and_send():
             message="访问被拒绝，Cookie可能已过期或无效，请更新cookie.txt文件"
         )
         return
-    logger.warning(f"API 原始返回内容: {data}")
+    #logger.warning(f"API 原始返回内容: {data}")
 
     items = data.get("data", {}).get("items")
     if not items:
