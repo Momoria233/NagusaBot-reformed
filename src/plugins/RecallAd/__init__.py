@@ -1,6 +1,6 @@
 import os, json
 from datetime import datetime, timedelta, timezone
-
+import nonebot
 from nonebot import logger
 from nonebot import on_message, on_regex
 from nonebot.adapters.onebot.v11 import (
@@ -48,11 +48,15 @@ async def RecallNotice_handle(bot: Bot, event: GroupMessageEvent, state: T_State
                     try:
                         await bot.delete_msg(message_id=event.reply.message_id)
                         await RecallNotice.finish("消息已撤回。")
+                    except nonebot.exception.FinishedException:
+                        pass
                     except Exception as e:
                         await RecallNotice.finish(f"撤回失败：{e}")
 
     try:
         await bot.delete_msg(message_id=event.reply.message_id)
+    except nonebot.exception.FinishedException:
+        pass
     except Exception as e:
         await RecallNotice.finish(f"撤回失败：{e}")
 
