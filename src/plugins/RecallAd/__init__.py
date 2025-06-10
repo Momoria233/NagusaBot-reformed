@@ -12,7 +12,7 @@ from nonebot.params import EventMessage
 assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 revokeRec = os.path.join(assets_dir,"revoke_records.json")
 tz = timezone(timedelta(hours=8))
-whitelist = [2447209382, 123456789]
+whitelist = [2447209382, 853215637]
 
 with open(revokeRec, "r", encoding="utf-8") as f:
     revoke_record = json.load(f)
