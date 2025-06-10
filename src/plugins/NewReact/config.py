@@ -41,7 +41,11 @@ class Config:
         "6.8x51mm Hybrid",
         ".50 BMG",
         ".338 lapua magnum",
-        "9x39mm SP-6"
+        "9x39mm SP-6",
+        "赤壁、大炎上！！",
+        "Master难度的封焔の135秒",
+        "Master难度的XL TECHNO -More Dance Remix-",
+        "Master难度的TEmPTaTiON"
     ]
     stu = [
         "名草",
