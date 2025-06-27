@@ -9,7 +9,7 @@ __pycache__/
 cache
 logs
 .vscode
-src/plugins/RecallAd/assets/revoke_record.json
+src/plugins/RecallAd/assets/revoke_records.json
 src/plugins/llmPlugin/apikey.json
 src/plugins/NewReact/apikey.json
 src/plugins/bilibiliRepost/assets/cookie.json
