@@ -14,6 +14,12 @@ revokeRec = os.path.join(assets_dir,"revoke_records.json")
 tz = timezone(timedelta(hours=8))
 whitelist = [2447209382, 853215637]
 
+# 新增：如果json文件不存在则自动创建
+if not os.path.exists(revokeRec):
+    os.makedirs(assets_dir, exist_ok=True)
+    with open(revokeRec, "w", encoding="utf-8") as f:
+        json.dump({}, f, ensure_ascii=False, indent=2)
+
 with open(revokeRec, "r", encoding="utf-8") as f:
     revoke_record = json.load(f)
 
