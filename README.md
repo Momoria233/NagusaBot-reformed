@@ -54,4 +54,4 @@
 -   [x] 接入llm实现群友语录查询并自动发送功能
 -   [x] 通过 send_group_forward_msg 做“哎，大手”功能
 -   [x] 通过 send_group_forward_msg 实现搬史 bot（？
--   [ ] 关联夏莱烤肉屋自动转发
+-   [x] 关联夏莱烤肉屋自动转发

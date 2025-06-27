@@ -33,7 +33,10 @@ async def RecallNotice_handle(bot: Bot, event: GroupMessageEvent, state: T_State
     group_id = event.group_id
     user_id = event.reply.sender.user_id
     replyusr_id = event.user_id
+    msg = event.message_id
+    adMsg = await bot.get_msg(message_id=msg)
     key = key_str(group_id, user_id)
+    LoggingMsg = f"用户 {user_id} 在群 {group_id} 发送了广告，内容为{adMsg}，触发人：{replyusr_id}，由当前违规次数：{count}。"
 
     now = datetime.now(tz)
     if replyusr_id not in whitelist or now.hour == 12:
@@ -77,7 +80,6 @@ async def RecallNotice_handle(bot: Bot, event: GroupMessageEvent, state: T_State
 
     revoke_record[key] = {"count": count, "last_time": now.isoformat()}
     save_records()
-
     if count == 1:
         await RecallNotice.finish("⚠️本群广告时间为12-13点，第一次违规提醒，消息已被撤回。请注意群规。")
     elif count == 2:
