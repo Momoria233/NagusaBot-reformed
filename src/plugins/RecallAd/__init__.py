@@ -99,7 +99,9 @@ async def RecallNotice_handle(bot: Bot, event: GroupMessageEvent, state: T_State
         last_time = datetime.fromisoformat(last_time_str) if last_time_str else None
 
     if last_time and (now - last_time) < timedelta(minutes=20):
-        LoggingMsg = f"【在冷却期内的广告处理，请注意人工鉴别】\n用户 {user_id} 在群 {group_id} 发送了广告，内容为“{adMsg}”\n触发人：{replyusr_id}，当前违规次数：{count}。"
+        LoggingMsg = f"【在冷却期内的广告提示，未被处理】\n用户 {user_id} 在群 {group_id} 发送了广告，内容为“{adMsg}”\n触发人：{replyusr_id}，当前违规次数：{count}。"
+        await bot.send_private_msg(user_id=2447209382, message=LoggingMsg)
+        await bot.send_group_msg(group_id=1036382420, message=LoggingMsg)
         await RecallNotice.finish("20分钟内已处理过该用户，无需重复操作。")
         return
 
@@ -113,6 +115,7 @@ async def RecallNotice_handle(bot: Bot, event: GroupMessageEvent, state: T_State
     LoggingMsg = f"用户 {user_id} 在群 {group_id} 发送了广告，内容为“{adMsg}”\n触发人：{replyusr_id}，当前违规次数：{count}。"
     # LoggingMsg = f"[debug] {adReMsg}"
     await bot.send_private_msg(user_id=2447209382, message=LoggingMsg)
+    await bot.send_group_msg(group_id=1036382420, message=LoggingMsg)
     revoke_record[key] = {"count": count, "last_time": now.isoformat()}
     save_records()
     # count = 1
