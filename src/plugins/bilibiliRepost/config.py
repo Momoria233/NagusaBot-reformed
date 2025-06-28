@@ -14,5 +14,5 @@ config = Config.model_validate({
         # 3546575051688471: 225173408,
         # 410532721: 225173408,
     },
-    "bilibili_watch_interval": 10,
+    "bilibili_watch_interval": 120,
 })

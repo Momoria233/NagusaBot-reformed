@@ -17,7 +17,7 @@ require("nonebot_plugin_apscheduler")
 from nonebot_plugin_apscheduler import scheduler
 
 UID_GROUP_MAP = config.bilibili_watch_uid_group_map
-INTERVAL = 10
+INTERVAL = 120
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CACHE_DIR = os.path.join(os.path.join(BASE_DIR, "cache"), "bilibiliRepost")
@@ -101,10 +101,10 @@ async def check_and_send_for_uid(uid, group_id):
     for item in items:
         dynamic_id = item.get("id_str")
         if not dynamic_id:
-            logger.warning(f"动态ID为空，跳过此条动态 (UID: {uid})")
+            # logger.warning(f"动态ID为空，跳过此条动态 (UID: {uid})")
             continue
         if dynamic_id in cache:
-            logger.info(f"动态ID {dynamic_id} 已存在于缓存中，跳过此条动态 (UID: {uid})")
+            # logger.info(f"动态ID {dynamic_id} 已存在于缓存中，跳过此条动态 (UID: {uid})")
             continue
 
         dynamic_type = item.get("type")
