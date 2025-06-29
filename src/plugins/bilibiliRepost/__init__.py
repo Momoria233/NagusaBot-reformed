@@ -17,7 +17,7 @@ require("nonebot_plugin_apscheduler")
 from nonebot_plugin_apscheduler import scheduler
 
 UID_GROUP_MAP = config.bilibili_watch_uid_group_map
-INTERVAL = 10
+INTERVAL = 120
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CACHE_DIR = os.path.join(os.path.join(BASE_DIR, "cache"), "bilibiliRepost")
