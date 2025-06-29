@@ -10,8 +10,8 @@ class Config(BaseModel):
 config = Config.model_validate({
     "bilibili_watch_uid_group_map": {
         3546575051688471: 996101999,
-        1165690698: 996101999
-        # 3546575051688471: 225173408,
+        1165690698: 996101999,
+        3546575051688471: 225173408,
         # 410532721: 225173408,
     },
     "bilibili_watch_interval": 120,

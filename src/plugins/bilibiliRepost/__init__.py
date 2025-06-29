@@ -17,7 +17,7 @@ require("nonebot_plugin_apscheduler")
 from nonebot_plugin_apscheduler import scheduler
 
 UID_GROUP_MAP = config.bilibili_watch_uid_group_map
-INTERVAL = 120
+INTERVAL = 10
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CACHE_DIR = os.path.join(os.path.join(BASE_DIR, "cache"), "bilibiliRepost")
@@ -101,10 +101,10 @@ async def check_and_send_for_uid(uid, group_id):
     for item in items:
         dynamic_id = item.get("id_str")
         if not dynamic_id:
-            # logger.warning(f"动态ID为空，跳过此条动态 (UID: {uid})")
             continue
-        if dynamic_id in cache:
-            # logger.info(f"动态ID {dynamic_id} 已存在于缓存中，跳过此条动态 (UID: {uid})")
+        if dynamic_id in cache or dynamic_id in new_cache:
+            logger.warning(f"动态 {dynamic_id} 已存在于缓存中，跳过推送 (UID: {uid})")
+            # 防止本轮重复推送
             continue
 
         dynamic_type = item.get("type")
@@ -171,10 +171,6 @@ async def check_and_send_for_uid(uid, group_id):
             msg_list.append(desc if desc else "无文字内容")
             orig = item.get("orig")
             if orig:
-                orig_id = orig.get("id_str")
-                # 防止原动态被重复推送
-                if orig_id and orig_id not in cache:
-                    cache.append(orig_id)
                 orig_author = (
                     orig.get("modules", {})
                         .get("module_author", {})
@@ -224,13 +220,11 @@ async def check_and_send_for_uid(uid, group_id):
             desc_obj = (
                 item.get("modules", {})
                     .get("module_dynamic", {})
-                    .get("desc", {})
+                    .get("desc")
             )
             description = ""
-            if desc_obj:
-                # 优先取desc.text
+            if desc_obj and isinstance(desc_obj, dict):
                 description = desc_obj.get("text", "")
-                # 若desc.text为空，尝试拼接rich_text_nodes
                 if not description and "rich_text_nodes" in desc_obj:
                     description = "".join([node.get("text", "") for node in desc_obj["rich_text_nodes"]])
             msg_list.append(description if description else "无文字内容")
