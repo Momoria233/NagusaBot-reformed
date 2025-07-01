@@ -1,5 +1,5 @@
 # tbd：纯文字类型无法识别转发
-
+# 相同账号转发不同群聊的bug还是未修复
 
 import os
 import json
