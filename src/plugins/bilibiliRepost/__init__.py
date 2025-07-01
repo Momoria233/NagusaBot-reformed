@@ -30,18 +30,18 @@ with open(os.path.join(assets_dir, "cookie.json"), "r", encoding="utf-8") as f:
     COOKIE = json.load(f).get("cookie", "")
 cookiePath = os.path.join(assets_dir, "cookie.json")
 
-def get_cache_file(uid):
-    return os.path.join(CACHE_DIR, f'dynamic_cache_{uid}.json')
+def get_cache_file(uid,group_id):
+    return os.path.join(CACHE_DIR, f'dynamic_cache_{uid}_{group_id}.json')
 
-def load_cache(uid):
-    cache_file = get_cache_file(uid)
+def load_cache(uid,group_id):
+    cache_file = get_cache_file(uid,group_id)
     if os.path.exists(cache_file):
         with open(cache_file, 'r') as f:
             return json.load(f)
     return []
 
-def save_cache(uid, cache):
-    cache_file = get_cache_file(uid)
+def save_cache(uid, group_id,cache):
+    cache_file = get_cache_file(uid,group_id)
     with open(cache_file, 'w') as f:
         json.dump(cache, f)
 
@@ -64,7 +64,7 @@ def get_user_dynamics(uid):
     return response.json()
 
 async def check_and_send_for_uid(uid, group_id):
-    cache = load_cache(uid)
+    cache = load_cache(uid,group_id)
     data = get_user_dynamics(uid)
     bot = get_bot()
     if data.get("code") == -352:
@@ -95,7 +95,7 @@ async def check_and_send_for_uid(uid, group_id):
             dynamic_id = item.get("id_str")
             if dynamic_id:
                 new_cache.append(dynamic_id)
-        save_cache(uid, new_cache[-100:])
+        save_cache(uid, group_id,new_cache[-100:])
         return
 
     for item in items:
@@ -239,7 +239,7 @@ async def check_and_send_for_uid(uid, group_id):
             logger.error(f"发送失败: {e}")
 
         new_cache.append(dynamic_id)
-    save_cache(uid, new_cache[-100:])
+    save_cache(uid,group_id, new_cache[-100:])
 
 update_cookie = on_regex(r"^更新B站Cookie$", block=True)
 
