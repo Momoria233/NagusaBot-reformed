@@ -180,12 +180,14 @@ async def check_and_send_for_uid(uid, group_id):
                 orig_url = f"https://t.bilibili.com/{orig.get('id_str', '')}"
                 msg_list.append(f"转发自：{orig_author}\n{orig_url}")
                 # 展示原动态内容
-                orig_desc = (
+                orig_desc_obj = (
                     orig.get("modules", {})
                         .get("module_dynamic", {})
-                        .get("desc", {})
-                        .get("text", "")
+                        .get("desc")
                 )
+                orig_desc = ""
+                if orig_desc_obj and isinstance(orig_desc_obj, dict):
+                    orig_desc = orig_desc_obj.get("text", "")
                 if orig_desc:
                     msg_list.append(f"原动态内容：{orig_desc}")
                 # 视频
@@ -225,8 +227,6 @@ async def check_and_send_for_uid(uid, group_id):
             description = ""
             if desc_obj and isinstance(desc_obj, dict):
                 description = desc_obj.get("text", "")
-                if not description and "rich_text_nodes" in desc_obj:
-                    description = "".join([node.get("text", "") for node in desc_obj["rich_text_nodes"]])
             msg_list.append(description if description else "无文字内容")
 
         # 其他类型
