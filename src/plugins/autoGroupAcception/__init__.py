@@ -31,7 +31,7 @@ async def handle_group_request(bot: Bot, event: GroupRequestEvent):
     if not event.group_id in Config.group_whitelist:
         logger.info(f"Group {event.group_id} not in whitelist")
         await GroupRequest.finish()
-    if event.user_id == 2750485205:
+    if event.user_id == 874760038:
         logger.info("Request Denied")
         await GroupRequest.finish()
     logger.info(event.comment)
