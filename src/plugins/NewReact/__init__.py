@@ -211,17 +211,17 @@ async def StartTotalAst(bot: Bot, event: GroupMessageEvent, state: T_State):
     await Start_TotalAst.finish(message=Message([at, Total_Assault]))
 
 
-pokeReact = on_notice()
+# pokeReact = on_notice()
 
 
-@pokeReact.handle()
-async def pokeReaction(bot: Bot, event: PokeNotifyEvent, state: T_State):
-    if not Config.activate_poke:
-        await pokeReact.finish()
-    if event.target_id == event.self_id:
-        at = MessageSegment.at(event.get_user_id())
-        msg = MessageSegment.text(" " + random.choice(Config.react))
-        await pokeReact.finish(message=Message([at, msg]))
+# @pokeReact.handle()
+# async def pokeReaction(bot: Bot, event: PokeNotifyEvent, state: T_State):
+#     if not Config.activate_poke:
+#         await pokeReact.finish()
+#     if event.target_id == event.self_id:
+#         at = MessageSegment.at(event.get_user_id())
+#         msg = MessageSegment.text(" " + random.choice(Config.react))
+#         await pokeReact.finish(message=Message([at, msg]))
 
 
 RPluckyKing = on_notice()
