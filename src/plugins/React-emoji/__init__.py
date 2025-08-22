@@ -42,6 +42,8 @@ async def huizhuar(bot: Bot, event: GroupMessageEvent):
 pokeReact = on_notice()
 @pokeReact.handle()
 async def pokeReaction(bot: Bot, event: PokeNotifyEvent):
+    if event.target_id != event.self_id:
+        await pokeReact.finish()
     ret = random.randint(0,2)
     if ret == 0:
         jpg_path = emojiChoice("cute")
@@ -54,7 +56,6 @@ async def pokeReaction(bot: Bot, event: PokeNotifyEvent):
             await pokeReact.finish("没有找到挥爪表情")
         await pokeReact.finish(MessageSegment.image(gif_path))
     else:
-        if event.target_id == event.self_id:
-            at = MessageSegment.at(event.get_user_id())
-            msg = MessageSegment.text(" " + random.choice(Config.react))
-            await pokeReact.finish(message=Message([at, msg]))
+        at = MessageSegment.at(event.get_user_id())
+        msg = MessageSegment.text(" " + random.choice(Config.react))
+        await pokeReact.finish(message=Message([at, msg]))
