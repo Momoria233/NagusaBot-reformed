@@ -232,6 +232,8 @@ async def check_and_send_for_uid(uid, group_id):
         # 其他类型
         else:
             msg_list.append(f"暂不支持的动态类型：{dynamic_type}")
+            await bot.send_private_msg(user_id = 2447209382, messgage = msg_list)
+            await bot.finish()
 
         try:
             await bot.send_group_msg(group_id=group_id, message="\n".join(msg_list))
