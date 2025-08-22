@@ -233,7 +233,7 @@ async def RPluckyKingFunc(bot: Bot, event: LuckyKingNotifyEvent, state: T_State)
         await RPluckyKing.finish()
     at = MessageSegment.at(event.get_user_id())
     msg = MessageSegment.text(" " + random.choice(Config.Congrats))
-    await pokeReact.finish(message=Message([at, msg]))
+    await RPluckyKing.finish(message=Message([at, msg]))
 
 
 # nao = on_regex(pattern=r"^闹了$", priority=1)
