@@ -64,7 +64,7 @@ async def handle_group_request(bot: Bot, event: GroupRequestEvent):
     logger.info(answer)
     if event.group_id in Config.manual_approve_list:
         logger.info(f"group {event.group_id} in manual approve list")
-        await check_manual_approve(bot, event, "manualApprove")
+        await check_manual_approve(bot, event, type="manualApprove",answer="none")
         await GroupRequest.finish()
     if check_stu_name(answer):
         await event.approve(bot)
