@@ -22,6 +22,34 @@ def check_stu_name(input_name):
                     return True
             return False
 
+async def check_manual_approve(bot: Bot, event: GroupRequestEvent,type: str,answer: str):
+    if type == "autoMatchFailed":
+        msg = (f"Group {event.group_id} request from {event.user_id} 匹配失败。 \n申请提示词: {answer}，请在5分钟内回复“是”通过，“否”拒绝。")
+        logger.info(msg)
+        await bot.send_private_msg(user_id=2447209382, message=msg)
+    elif type == "manualApprove":
+        msg = (f"Group {event.group_id} request from {event.user_id} 需要人工审核，请在5分钟内回复“是”通过，“否”拒绝。")
+        logger.info(msg)
+        await bot.send_private_msg(user_id=2447209382, message=msg)
+    else:
+        return False
+    key = f"{event.group_id}_{event.user_id}"
+    pending_requests[key] = (bot, event)
+    try:
+        result = await asyncio.wait_for(wait_for_reply(key), timeout=300)
+        if result == "是":
+            await event.approve(bot)
+            await bot.send_private_msg(user_id=2447209382, message="已通过。")
+        elif result == "否":
+            await event.reject(bot)
+            await bot.send_private_msg(user_id=2447209382, message="已拒绝。")
+        else:
+            await bot.send_private_msg(user_id=2447209382, message=f"未知回复，已结束处理。回复：{result}。")
+    except asyncio.TimeoutError:
+        await bot.send_private_msg(user_id=2447209382, message="5分钟超时，已结束处理。")
+    finally:
+        pending_requests.pop(key, None)
+
 pending_requests = {}
 
 GroupRequest = on_request(priority=1)
@@ -31,12 +59,13 @@ async def handle_group_request(bot: Bot, event: GroupRequestEvent):
     if not event.group_id in Config.group_whitelist:
         logger.info(f"Group {event.group_id} not in whitelist")
         await GroupRequest.finish()
-    if event.user_id == 874760038:
-        logger.info("Request Denied")
-        await GroupRequest.finish()
     logger.info(event.comment)
     answer = event.comment.split("答案：", 1)[1] if "答案：" in event.comment else ""
     logger.info(answer)
+    if event.group_id in Config.manual_approve_list:
+        logger.info(f"group {event.group_id} in manual approve list")
+        await check_manual_approve(bot, event, "manualApprove")
+        await GroupRequest.finish()
     if check_stu_name(answer):
         await event.approve(bot)
         msg = f"Group {event.group_id} request from {event.user_id} approved"
@@ -44,25 +73,8 @@ async def handle_group_request(bot: Bot, event: GroupRequestEvent):
         await bot.send_private_msg(user_id=2447209382, message=msg)
         await GroupRequest.finish()
     else:
-        msg = (f"Group {event.group_id} request from {event.user_id} 匹配失败。 \n申请提示词: {answer}，请在5分钟内回复“是”通过，“否”拒绝。")
-        logger.info(msg)
-        await bot.send_private_msg(user_id=2447209382, message=msg)
-        key = f"{event.group_id}_{event.user_id}"
-        pending_requests[key] = (bot, event)
-        try:
-            result = await asyncio.wait_for(wait_for_reply(key), timeout=300)
-            if result == "是":
-                await event.approve(bot)
-                await bot.send_private_msg(user_id=2447209382, message="已通过。")
-            elif result == "否":
-                await event.reject(bot)
-                await bot.send_private_msg(user_id=2447209382, message="已拒绝。")
-            else:
-                await bot.send_private_msg(user_id=2447209382, message=f"未知回复，已结束处理。回复：{result}。")
-        except asyncio.TimeoutError:
-            await bot.send_private_msg(user_id=2447209382, message="5分钟超时，已结束处理。")
-        finally:
-            pending_requests.pop(key, None)
+        logger.info(f"Group {event.group_id} request from {event.user_id} auto match failed")
+        await check_manual_approve(bot, event, type="autoMatchFailed",answer=answer)
         await GroupRequest.finish()
 
 async def wait_for_reply(key):

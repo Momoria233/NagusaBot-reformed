@@ -1,4 +1,6 @@
 import re
+from datetime import datetime
+import pytz
 
 from nonebot import logger, on_notice
 from nonebot.adapters.onebot.v11 import (
@@ -34,5 +36,24 @@ async def welcoming(bot: Bot, event: GroupIncreaseNoticeEvent, state: T_State):
                     logger.info(re.match(r"img:(.*)", string).group(1))
                     logger.info(os.path.join(assets_dir, re.match(r"img:(.*)", string).group(1)))
                     message_list.append(MessageSegment.image(os.path.join(assets_dir,re.match(r"img:(.*)", string).group(1))))
+                case str() as string if re.match(r"file:(.*)", string):
+                    logger.info(re.match(r"file:(.*)", string).group(1))
+                    message_list.append(MessageSegment.file(os.path.join(assets_dir, re.match(r"file:(.*)", string).group(1))))
+                case str() as string if re.match(r"countdown:(.*)", string):
+                    target_date_str = re.match(r"countdown:(.*)", string).group(1).strip()
+                    try:
+                        target_date = datetime.strptime(target_date_str, "%Y-%m-%d")
+                        target_date = pytz.timezone("Asia/Shanghai").localize(target_date)
+                        now = datetime.now(pytz.timezone("Asia/Shanghai"))
+                        delta = target_date - now
+                        days_remaining = delta.days
+                        if days_remaining >= 0:
+                            message_list.append(MessageSegment.text(f"{days_remaining}天"))
+                        else:
+                            message_list.append(MessageSegment.text("已过期"))
+                    except ValueError:
+                        logger.error(f"Invalid date format for countdown: {target_date_str}")
+                        message_list.append(MessageSegment.text("几"))
+                
 
     await NewWelcome.finish(Message(message_list))

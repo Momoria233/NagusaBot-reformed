@@ -8,6 +8,7 @@ from nonebot.adapters.onebot.v11 import (
 )
 from nonebot.typing import T_State
 from nonebot.params import EventMessage
+from .config import Config
 
 assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 revokeRec = os.path.join(assets_dir,"revoke_records.json")
@@ -33,7 +34,8 @@ def save_records():
 RecallNotice = on_message(priority=1, block=True)
 @RecallNotice.handle()
 async def RecallNotice_handle(bot: Bot, event: GroupMessageEvent, state: T_State, message: Message = EventMessage()):
-    
+    if event.group_id not in Config.group_whitelist:
+        return
     if message.extract_plain_text().strip() == "查询所有广告记录":
         if not revoke_record:
             await RecallNotice.finish("暂无广告记录。")
