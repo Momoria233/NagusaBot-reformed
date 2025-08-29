@@ -94,11 +94,10 @@ async def check_and_send_for_uid(uid, group_id):
     # 按时间排序items(假设id_str可以用于排序,因为B站动态ID是递增的)
     sorted_items = sorted(items, key=lambda x: x.get("id_str", "0"), reverse=True)
     
-    new_cache = []  # 创建新的空缓存,而不是复制旧缓存
-
     # 首次运行处理
     if not cache:
         logger.info(f"首次运行，仅缓存最新动态，不推送历史动态。UID: {uid}")
+        new_cache = []
         for item in sorted_items[:100]:  # 只缓存最新的100条
             dynamic_id = item.get("id_str")
             if dynamic_id:
@@ -108,6 +107,9 @@ async def check_and_send_for_uid(uid, group_id):
 
     # 获取最新的动态ID用于比对
     latest_cached_id = cache[0] if cache else "0"
+    
+    # 保持现有缓存并准备更新
+    new_cache = cache.copy()  # 复制现有缓存而不是创建空列表
 
     # 处理新动态
     new_dynamics = []
@@ -257,15 +259,15 @@ async def check_and_send_for_uid(uid, group_id):
 
         try:
             await bot.send_group_msg(group_id=group_id, message="\n".join(msg_list))
+            # 发送成功后将新动态ID添加到缓存开头
+            if dynamic_id not in new_cache:
+                new_cache.insert(0, dynamic_id)
         except Exception as e:
             logger.error(f"发送失败: {e}")
 
-        # 将新动态ID添加到缓存开头
-        if dynamic_id not in new_cache:
-            new_cache.insert(0, dynamic_id)
-
     # 保存更新后的缓存(保持最多100条)
-    save_cache(uid, group_id, new_cache[:200])
+    if new_cache != cache:  # 只有当缓存发生变化时才保存
+        save_cache(uid, group_id, new_cache[:100])
 
 # update_cookie = on_regex(r"^更新B站Cookie$", block=True)
 
