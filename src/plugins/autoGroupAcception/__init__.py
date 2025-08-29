@@ -28,7 +28,7 @@ async def check_manual_approve(bot: Bot, event: GroupRequestEvent,type: str,answ
         logger.info(msg)
         await bot.send_private_msg(user_id=2447209382, message=msg)
     elif type == "manualApprove":
-        msg = (f"Group {event.group_id} request from {event.user_id} 需要人工审核，请在5分钟内回复“是”通过，“否”拒绝。")
+        msg = (f"Group {event.group_id} request from {event.user_id} 需要人工审核，\n申请提示词: {answer}，请在5分钟内回复“是”通过，“否”拒绝。")
         logger.info(msg)
         await bot.send_private_msg(user_id=2447209382, message=msg)
     else:
