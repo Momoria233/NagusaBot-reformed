@@ -354,3 +354,14 @@ async def pin(bot: Bot, event: GroupMessageEvent, state: T_State):
     selected_food = random.choices([randFood, Total_Assult_food], weights=[85, 15], k=1)[0]
     msg = f" 您与{random.randint(1,1052)}位群友一起拼到了{selected_food}，为您节省了{round(random.uniform(1,20),2)}元。"
     await pinhaofan.finish(message=Message([at, msg]))
+
+
+baijian  = on_regex(pattern=r"速速拜见$", priority=1)
+@baijian.handle()
+async def baijianL(bot: Bot, event: GroupMessageEvent, state: T_State):
+    user_id = event.get_user_id()
+    at = MessageSegment.at(user_id)
+    if user_id == "1051575616":
+        await baijian.finish(message=Message([at,"速速拜见"]))
+    else:
+        await baijian.finish()
