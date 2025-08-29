@@ -9,6 +9,6 @@ requires-python = ">=3.9, <4.0"
 adapters = [
     {name = "OneBot V11", module_name = "nonebot.adapters.onebot.v11"}
 ]
-plugins = ["nonebot_plugin_apscheduler","src.plugins.birthday", "src.plugins.jm", "src.plugins.NewReact", "src.plugins.welcome","src.plugins.help","src.plugins.autoGroupAcception","src.plugins.RecallAd","src.plugins.React-emoji"]
+plugins = ["nonebot_plugin_apscheduler","src.plugins.birthday", "src.plugins.jm", "src.plugins.NewReact", "src.plugins.welcome","src.plugins.help","src.plugins.autoGroupAcception","src.plugins.RecallAd","src.plugins.React-emoji","src.plugins.bilibiliRepost"]
 plugin_dirs = []
 builtin_plugins = ["echo"]

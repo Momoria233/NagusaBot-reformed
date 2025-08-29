@@ -16,8 +16,10 @@ from nonebot.params import CommandArg
 require("nonebot_plugin_apscheduler")
 from nonebot_plugin_apscheduler import scheduler
 
+global EMERGENCY_STOP
 UID_GROUP_MAP = config.bilibili_watch_uid_group_map
 INTERVAL = 120
+EMERGENCY_STOP = False
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CACHE_DIR = os.path.join(os.path.join(BASE_DIR, "cache"), "bilibiliRepost")
@@ -64,9 +66,11 @@ def get_user_dynamics(uid):
     return response.json()
 
 async def check_and_send_for_uid(uid, group_id):
-    cache = load_cache(uid,group_id)
+    cache = load_cache(uid, group_id)
     data = get_user_dynamics(uid)
     bot = get_bot()
+    
+    # Error handling code remains the same
     if data.get("code") == -352:
         logger.warning(f"B站API请求失败: -352，可能Cookie失效，请更新cookie.txt文件 (UID: {uid})")
         await bot.send_private_msg(
@@ -82,31 +86,47 @@ async def check_and_send_for_uid(uid, group_id):
         )
         return
 
-    items = data.get("data", {}).get("items")
+    items = data.get("data", {}).get("items", [])
     if not items:
         logger.warning(f"未获取到动态内容，data中无 items 字段 (UID: {uid})")
         return
-    # logger.info(items)
-    new_cache = cache.copy()
 
+    # 按时间排序items(假设id_str可以用于排序,因为B站动态ID是递增的)
+    sorted_items = sorted(items, key=lambda x: x.get("id_str", "0"), reverse=True)
+    
+    new_cache = []  # 创建新的空缓存,而不是复制旧缓存
+
+    # 首次运行处理
     if not cache:
-        logger.info(f"首次运行，仅缓存当前动态，不推送历史动态。UID: {uid}")
-        for item in items:
+        logger.info(f"首次运行，仅缓存最新动态，不推送历史动态。UID: {uid}")
+        for item in sorted_items[:100]:  # 只缓存最新的100条
             dynamic_id = item.get("id_str")
             if dynamic_id:
                 new_cache.append(dynamic_id)
-        save_cache(uid, group_id,new_cache[-100:])
+        save_cache(uid, group_id, new_cache)
         return
 
-    for item in items:
+    # 获取最新的动态ID用于比对
+    latest_cached_id = cache[0] if cache else "0"
+
+    # 处理新动态
+    new_dynamics = []
+    for item in sorted_items:
         dynamic_id = item.get("id_str")
         if not dynamic_id:
             continue
-        if dynamic_id in cache or dynamic_id in new_cache:
-            logger.warning(f"动态 {dynamic_id} 已存在于缓存中，跳过推送 (UID: {uid})")
-            # 防止本轮重复推送
-            continue
+            
+        # 如果当前动态ID小于等于最新缓存的ID,说明后面都是旧动态,可以跳出循环
+        if dynamic_id <= latest_cached_id:
+            break
+            
+        new_dynamics.append(item)
 
+    # 倒序处理,确保最新的动态最后发送
+    for item in reversed(new_dynamics):
+        dynamic_id = item.get("id_str")
+        
+        # 动态处理代码保持不变
         dynamic_type = item.get("type")
         author_name = (
             item.get("modules", {})
@@ -240,83 +260,101 @@ async def check_and_send_for_uid(uid, group_id):
         except Exception as e:
             logger.error(f"发送失败: {e}")
 
-        new_cache.append(dynamic_id)
-    save_cache(uid,group_id, new_cache[-100:])
+        # 将新动态ID添加到缓存开头
+        if dynamic_id not in new_cache:
+            new_cache.insert(0, dynamic_id)
 
-update_cookie = on_regex(r"^更新B站Cookie$", block=True)
+    # 保存更新后的缓存(保持最多100条)
+    save_cache(uid, group_id, new_cache[:200])
 
-@update_cookie.handle()
-async def handle_update_cookie(bot: Bot, event: PrivateMessageEvent):
-    try:
-        qrcode_key, qrcode_url = get_qrcode()
-        img = qrcode.make(qrcode_url)
-        buf = BytesIO()
-        img.save(buf, format='PNG')
-        buf.seek(0)
+# update_cookie = on_regex(r"^更新B站Cookie$", block=True)
 
-        await update_cookie.send(MessageSegment.image(buf))
-        time.sleep(30)
-        login_url = poll_login(qrcode_key)
-        logger.info(f"{qrcode_key}/n{qrcode_url}/n{login_url}")
-        if login_url:
-            cookies = get_cookies_from_url(login_url)
-            cookie_str = save_cookie(cookies)
-            await update_cookie.send("登录成功，cookie已保存。")
-            await update_cookie.send(f"Cookie:{cookie_str}")
-        else:
-            await update_cookie.send("二维码过期或用户取消，登录失败。")
-    except Exception as e:
-        await update_cookie.send(f"发生错误: {str(e)}")
+# @update_cookie.handle()
+# async def handle_update_cookie(bot: Bot, event: PrivateMessageEvent):
+#     try:
+#         qrcode_key, qrcode_url = get_qrcode()
+#         img = qrcode.make(qrcode_url)
+#         buf = BytesIO()
+#         img.save(buf, format='PNG')
+#         buf.seek(0)
 
-def get_qrcode():
-    url = "https://passport.bilibili.com/x/passport-login/web/qrcode/generate"
-    headers = {
-        "User-Agent": "Mozilla/5.0"
-    }
-    resp = requests.get(url, headers=headers).json()
-    qrcode_key = resp['data']['qrcode_key']
-    qrcode_url = resp['data']['url']
-    return qrcode_key, qrcode_url
+#         await update_cookie.send(MessageSegment.image(buf))
+#         time.sleep(30)
+#         login_url = poll_login(qrcode_key)
+#         logger.info(f"{qrcode_key}/n{qrcode_url}/n{login_url}")
+#         if login_url:
+#             cookies = get_cookies_from_url(login_url)
+#             cookie_str = save_cookie(cookies)
+#             await update_cookie.send("登录成功，cookie已保存。")
+#             await update_cookie.send(f"Cookie:{cookie_str}")
+#         else:
+#             await update_cookie.send("二维码过期或用户取消，登录失败。")
+#     except Exception as e:
+#         await update_cookie.send(f"发生错误: {str(e)}")
 
-def poll_login(qrcode_key):
-    url = "https://passport.bilibili.com/x/passport-login/web/qrcode/poll"
-    headers = {
-        "User-Agent": "Mozilla/5.0",
-        "Content-Type": "application/x-www-form-urlencoded"
-    }
-    data = {
-        "qrcode_key": qrcode_key
-    }
-    for _ in range(60):
-        resp = requests.post(url, headers=headers, data=data)
-        if resp.status_code != 200:
-            return None
-        try:
-            json_data = resp.json()
-        except Exception:
-            return None
-        if json_data['data']['code'] == 0:
-            return json_data['data']['url']
-        elif json_data['data']['code'] == 86038:
-            return None
-        time.sleep(1)
-    return None
+# def get_qrcode():
+#     url = "https://passport.bilibili.com/x/passport-login/web/qrcode/generate"
+#     headers = {
+#         "User-Agent": "Mozilla/5.0"
+#     }
+#     resp = requests.get(url, headers=headers).json()
+#     qrcode_key = resp['data']['qrcode_key']
+#     qrcode_url = resp['data']['url']
+#     return qrcode_key, qrcode_url
 
-def get_cookies_from_url(url):
-    session = requests.Session()
-    session.get(url)
-    return session.cookies.get_dict()
+# def poll_login(qrcode_key):
+#     url = "https://passport.bilibili.com/x/passport-login/web/qrcode/poll"
+#     headers = {
+#         "User-Agent": "Mozilla/5.0",
+#         "Content-Type": "application/x-www-form-urlencoded"
+#     }
+#     data = {
+#         "qrcode_key": qrcode_key
+#     }
+#     for _ in range(60):
+#         resp = requests.post(url, headers=headers, data=data)
+#         if resp.status_code != 200:
+#             return None
+#         try:
+#             json_data = resp.json()
+#         except Exception:
+#             return None
+#         if json_data['data']['code'] == 0:
+#             return json_data['data']['url']
+#         elif json_data['data']['code'] == 86038:
+#             return None
+#         time.sleep(1)
+#     return None
 
-def save_cookie(cookies):
-    dedeuserid = cookies.get("DedeUserID", "")
-    sessdata = cookies.get("SESSDATA", "")
-    bili_jct = cookies.get("bili_jct", "")
-    cookie_str = f"DedeUserID={dedeuserid};SESSDATA={sessdata};bili_jct={bili_jct}"
-    with open(cookiePath, "w", encoding="utf-8") as f:
-        json.dump({"cookie": cookie_str}, f, ensure_ascii=False, indent=4)
-    return cookie_str
+# def get_cookies_from_url(url):
+#     session = requests.Session()
+#     session.get(url)
+#     return session.cookies.get_dict()
+
+# def save_cookie(cookies):
+#     dedeuserid = cookies.get("DedeUserID", "")
+#     sessdata = cookies.get("SESSDATA", "")
+#     bili_jct = cookies.get("bili_jct", "")
+#     cookie_str = f"DedeUserID={dedeuserid};SESSDATA={sessdata};bili_jct={bili_jct}"
+#     with open(cookiePath, "w", encoding="utf-8") as f:
+#         json.dump({"cookie": cookie_str}, f, ensure_ascii=False, indent=4)
+#     return cookie_str
+
+EmergencyStop = on_regex(r"^B站动态紧急停止$", block=True)
+@EmergencyStop.handle()
+async def handle_emergency_stop(bot: Bot, event: PrivateMessageEvent):
+    global EMERGENCY_STOP
+    EMERGENCY_STOP = True
+    logger.error("Bilibili动态监控已紧急停止。")
+    await EmergencyStop.finish()
+
+
 
 @scheduler.scheduled_job("interval", seconds=INTERVAL)
 async def bilibili_watch_job():
+    if EMERGENCY_STOP:
+        logger.error("Bilibili动态监控已紧急停止。")
+        return
     for uid, group_id in UID_GROUP_MAP.items():
         await check_and_send_for_uid(uid, group_id)
+
