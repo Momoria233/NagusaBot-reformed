@@ -32,18 +32,15 @@ with open(os.path.join(assets_dir, "cookie.json"), "r", encoding="utf-8") as f:
     COOKIE = json.load(f).get("cookie", "")
 cookiePath = os.path.join(assets_dir, "cookie.json")
 
-def get_cache_file(uid,group_id):
-    return os.path.join(CACHE_DIR, f'dynamic_cache_{uid}_{group_id}.json')
-
 def load_cache(uid,group_id):
-    cache_file = get_cache_file(uid,group_id)
+    cache_file = os.path.join(CACHE_DIR, f'dynamic_cache_{uid}_{group_id}.json')
     if os.path.exists(cache_file):
         with open(cache_file, 'r') as f:
             return json.load(f)
     return []
 
 def save_cache(uid, group_id,cache):
-    cache_file = get_cache_file(uid,group_id)
+    cache_file = os.path.join(CACHE_DIR, f'dynamic_cache_{uid}_{group_id}.json')
     with open(cache_file, 'w') as f:
         json.dump(cache, f)
 
@@ -67,6 +64,7 @@ def get_user_dynamics(uid):
 
 async def check_and_send_for_uid(uid, group_id):
     cache = load_cache(uid, group_id)
+    logger.info(f"cache: {cache}")
     data = get_user_dynamics(uid)
     bot = get_bot()
     
