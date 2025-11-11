@@ -1,0 +1,54 @@
+{
+  "templates": [
+    {
+      "id": "default",
+      "path": "01.png",
+      "font_path": "AlibabaPuHuiTi-3-105-Heavy.ttf",
+      "text_area": [353,666,465,225],
+      "max_font_size": 100,
+      "min_font_size": 16,
+      "align": "center",
+      "offset": [0,20]
+    },
+    {
+      "id":"approve",
+      "path":"approve.png",
+      "font_path":"SourceHanSerifCN-Medium-6.otf",
+      "text_area":[200,137,670,110],
+      "max_font_size":40,
+      "min_font_size":16,
+      "align":"center",
+      "offset":[0,20]
+    },
+    {
+      "id":"question",
+      "path":"question.png",
+      "font_path":"SourceHanSerifCN-Medium-6.otf",
+      "text_area":[193,144,715,94],
+      "max_font_size":40,
+      "min_font_size":16,
+      "align":"center",
+      "offset":[0,20]
+    },
+    {
+      "id":"false",
+      "path":"false.png",
+      "font_path":"SourceHanSerifCN-Medium-6.otf",
+      "text_area":[180,158,734,92],
+      "max_font_size":40,
+      "min_font_size":16,
+      "align":"center",
+      "offset":[0,20]
+    },
+    {
+      "id":"refute",
+      "path":"refute.png",
+      "font_path":"SourceHanSerifCN-Medium-6.otf",
+      "text_area":[174,158,735,95],
+      "max_font_size":40,
+      "min_font_size":16,
+      "align":"center",
+      "offset":[0,20]
+    }
+  ]
+}
