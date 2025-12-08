@@ -45,7 +45,7 @@ def emojiChoice(type_name):
         return None
     return os.path.join(type_dir, random.choice(files))
 
-huizhua = on_regex(pattern = r"^挥爪$", priority=1)
+huizhua = on_regex(pattern = r"^挥爪$")
 @huizhua.handle()
 async def huizhuar(bot: Bot, event: GroupMessageEvent):
     gif_path = emojiChoice("wave")
@@ -78,9 +78,9 @@ async def pokeReaction(bot: Bot, event: PokeNotifyEvent):
 
 # 下为旧React部分
 
-he = on_regex(pattern=r"^我超.*盒$", priority=1)
+he = on_regex(pattern=r"^我超.*盒$")
 @he.handle()
-async def he_handle(bot: Bot, event: GroupMessageEvent, state: T_State):
+async def he_handle(bot: Bot, event: GroupMessageEvent):
     at = MessageSegment.at(event.get_user_id())
     if not usr_cd_check(event.get_user_id()):
         await he.finish()
@@ -91,9 +91,9 @@ async def he_handle(bot: Bot, event: GroupMessageEvent, state: T_State):
     except Exception as e:
         logger.error(e)
 
-chishiL = on_regex(pattern=r"^吃史$", priority=1)
+chishiL = on_regex(pattern=r"^吃史$")
 @chishiL.handle()
-async def chishi(bot: Bot, event: GroupMessageEvent, state: T_State):
+async def chishi(bot: Bot, event: GroupMessageEvent):
     user_id = event.get_user_id()
     at = MessageSegment.at(user_id)
     if not usr_cd_check(user_id):
@@ -103,11 +103,11 @@ async def chishi(bot: Bot, event: GroupMessageEvent, state: T_State):
     await chishiL.finish(message=Message([at," 吃到了史"]))
 
 
-EatL = on_regex(pattern=r"^吃饭$", priority=1)
+EatL = on_regex(pattern=r"^吃饭$")
 
 
 @EatL.handle()
-async def Eat(bot: Bot, event: GroupMessageEvent, state: T_State):
+async def Eat(bot: Bot, event: GroupMessageEvent):
     user_id = event.get_user_id()
     at = MessageSegment.at(user_id)
     if not usr_cd_check(user_id):
@@ -121,21 +121,21 @@ async def Eat(bot: Bot, event: GroupMessageEvent, state: T_State):
     await EatL.finish(message=Message([at, msg]))
 
 
-Touxiang = on_regex(pattern=r"^投降$", priority=1)
+Touxiang = on_regex(pattern=r"^投降$")
 
 @Touxiang.handle()
-async def TouxiangL(bot: Bot, event: GroupMessageEvent, state: T_State):
+async def TouxiangL(bot: Bot, event: GroupMessageEvent):
     user_id = event.get_user_id()
     if not usr_cd_check(user_id):
         await Touxiang.finish()
     msg = "🏳"
     await Touxiang.finish(message=Message([msg]))
 
-Start_TotalAst = on_regex(pattern=r"^开票$", priority=1)
+Start_TotalAst = on_regex(pattern=r"^开票$")
 
 
 @Start_TotalAst.handle()
-async def StartTotalAst(bot: Bot, event: GroupMessageEvent, state: T_State):
+async def StartTotalAst(bot: Bot, event: GroupMessageEvent):
     user_id = event.get_user_id()
     at = MessageSegment.at(user_id)
     if not usr_cd_check(user_id):
@@ -151,18 +151,18 @@ RPluckyKing = on_notice()
 
 
 @RPluckyKing.handle()
-async def RPluckyKingFunc(bot: Bot, event: LuckyKingNotifyEvent, state: T_State):
+async def RPluckyKingFunc(bot: Bot, event: LuckyKingNotifyEvent):
     if not Config.activate_congrat:
         await RPluckyKing.finish()
     at = MessageSegment.at(event.get_user_id())
     msg = MessageSegment.text(" " + random.choice(Config.Congrats))
     await RPluckyKing.finish(message=Message([at, msg]))
 
-pinhaofan = on_regex(pattern=r"^拼好饭$", priority=1)
+pinhaofan = on_regex(pattern=r"^拼好饭$")
 
 
 @pinhaofan.handle()
-async def pin(bot: Bot, event: GroupMessageEvent, state: T_State):
+async def pin(bot: Bot, event: GroupMessageEvent):
     user_id = event.get_user_id()
     at = MessageSegment.at(user_id)
     if not usr_cd_check(user_id):
@@ -180,14 +180,3 @@ async def pin(bot: Bot, event: GroupMessageEvent, state: T_State):
     selected_food = random.choices([randFood, Total_Assult_food], weights=[85, 15], k=1)[0]
     msg = f" 您与{random.randint(1,1052)}位群友一起拼到了{selected_food}，为您节省了{round(random.uniform(1,20),2)}元。"
     await pinhaofan.finish(message=Message([at, msg]))
-
-
-baijian  = on_regex(pattern=r"速速拜见$", priority=1)
-@baijian.handle()
-async def baijianL(bot: Bot, event: GroupMessageEvent, state: T_State):
-    user_id = event.get_user_id()
-    at = MessageSegment.at(user_id)
-    if user_id == "1051575616":
-        await baijian.finish(message=Message([at," 拜见岁大王！"]))
-    else:
-        await baijian.finish()

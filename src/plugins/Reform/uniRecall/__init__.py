@@ -1,0 +1,126 @@
+import os, json
+from datetime import datetime, timedelta, timezone
+import nonebot
+from nonebot import logger
+from nonebot import on_regex
+from nonebot.adapters.onebot.v11 import (
+    Bot, MessageEvent, Message, GroupMessageEvent, MessageSegment
+)
+from nonebot.params import EventPlainText
+from .config import Config
+
+assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
+revokeRec = os.path.join(assets_dir, "revoke_records.json")
+tz = timezone(timedelta(hours=8))
+
+if not os.path.exists(revokeRec):
+    os.makedirs(assets_dir, exist_ok=True)
+    with open(revokeRec, "w", encoding="utf-8") as f:
+        json.dump({}, f, ensure_ascii=False, indent=2)
+
+with open(revokeRec, "r", encoding="utf-8") as f:
+    revoke_record = json.load(f)
+
+
+def key_str(group_id: int, user_id: int) -> str:
+    return f"{group_id}:{user_id}"
+
+def save_records():
+    with open(revokeRec, "w", encoding="utf-8") as f:
+        json.dump(revoke_record, f, ensure_ascii=False, indent=2)
+
+
+RecallTrigger = on_regex(r"^(请注意广告时间|bot撤回一下)$")
+
+
+@RecallTrigger.handle()
+async def recall_trigger(
+    bot: Bot,
+    event: GroupMessageEvent,
+    text: str = EventPlainText()
+):
+
+    if not event.reply:
+        await RecallTrigger.finish("请回复需要处理的消息。")
+
+    text = text.strip()
+
+    if text == "请注意广告时间":
+        await handle_advertisement(bot, event)
+        return
+
+    if text == "bot撤回一下":
+        await handle_user_recall(bot, event)
+        return
+
+async def handle_advertisement(bot: Bot, event: GroupMessageEvent):
+    group_id = event.group_id
+    if group_id not in Config.group_whitelist:
+        return
+
+    reply_user = event.reply.sender.user_id
+    trigger_user = event.user_id
+    msg_id = event.reply.message_id
+
+    ad_msg_raw = await bot.get_msg(message_id=msg_id)
+    adMsg = ""
+    for seg in ad_msg_raw["message"]:
+        if seg["type"] == "text":
+            adMsg = seg["data"].get("text", "")
+            break
+        if seg["type"] == "image":
+            adMsg = MessageSegment.image(seg["data"]["url"])
+            break
+
+    key = key_str(group_id, reply_user)
+    now = datetime.now(tz)
+    if now.hour == 12:
+        logger.info("用户不在白名单中或当前时间为12点，忽略。")
+        return
+    record = revoke_record.get(key, {})
+    if isinstance(record, int):
+        count = record + 1
+        last_time = None
+    else:
+        count = record.get("count", 0) + 1
+        last_time_str = record.get("last_time")
+        last_time = datetime.fromisoformat(last_time_str) if last_time_str else None
+
+    if last_time and (now - last_time) < timedelta(minutes=20):
+        LoggingMsg = f"【冷却期广告】\n用户 {reply_user}\n 群 {group_id}\n内容：{adMsg}\n触发人：{trigger_user}\n次数：{count}"
+        await bot.send_private_msg(user_id=2447209382, message=LoggingMsg)
+        await bot.send_group_msg(group_id=1036382420, message=LoggingMsg)
+        await RecallTrigger.finish("20分钟内已处理过，无需重复。")
+        return
+
+    try:
+        await bot.delete_msg(message_id=msg_id)
+    except Exception as e:
+        await RecallTrigger.finish(f"撤回失败：{e}")
+
+    revoke_record[key] = {"count": count, "last_time": now.isoformat()}
+    save_records()
+
+    LoggingMsg = f"用户 {reply_user} 在群 {group_id} 发送了广告，内容为“{adMsg}”\n触发人：{trigger_user}，当前违规次数：{count}。"
+    await bot.send_private_msg(user_id=2447209382, message=LoggingMsg)
+    await bot.send_group_msg(group_id=1036382420, message=LoggingMsg)
+
+    # 处罚逻辑
+    if count == 1:
+        await RecallTrigger.finish(MessageSegment.at(reply_user)+" ⚠️本群广告时间为12-13点，第一次违规提醒，消息已被撤回。请注意群规。")
+    elif count == 2:
+        await bot.set_group_ban(group_id=group_id, user_id=reply_user, duration=7*24*3600)
+        await RecallTrigger.finish(MessageSegment.at(reply_user+" ⚠️本群广告时间为12-13点，这是第二次违规，已被禁言 7 天，请注意群规。"))
+    elif count >= 3:
+        await RecallTrigger.finish("此为第三次违规发送广告，可以被移出群聊。")
+
+async def handle_user_recall(bot: Bot, event: GroupMessageEvent):
+    reply_user = event.reply.sender.user_id
+    if reply_user != event.user_id:
+        await RecallTrigger.finish(MessageSegment.at(event.user_id)+" 你只能撤回你自己的消息。")
+
+    try:
+        await bot.delete_msg(message_id=event.reply.message_id)
+        await RecallTrigger.finish(MessageSegment.at(event.user_id)+" 已撤回。")
+    except Exception as e:
+        await RecallTrigger.finish(MessageSegment.at(event.user_id)+f" 撤回失败：{e}")

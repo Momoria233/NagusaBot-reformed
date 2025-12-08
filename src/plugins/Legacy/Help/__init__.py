@@ -21,7 +21,7 @@ from nonebot.params import CommandArg
 
 from .getGroupConfig import *
 
-groupfwdmsg = on_command("help",aliases={"帮助"},priority=1)
+groupfwdmsg = on_command("help",aliases={"帮助"})
 
 assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 

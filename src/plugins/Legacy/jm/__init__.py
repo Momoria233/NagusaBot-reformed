@@ -28,7 +28,7 @@ async def init_func():
     logger.info("config loaded")
 
 
-jmDown = on_command("jm", rule=to_me(), priority=1, block=True)
+jmDown = on_command("jm", rule=to_me())
 
 
 @jmDown.handle()
