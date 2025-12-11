@@ -10,27 +10,36 @@ import qrcode
 from nonebot import get_bot, require, get_driver, on_command, on_regex
 from nonebot.rule import to_me
 from nonebot.log import logger
-from .config import config
+# Legacy config import removed; plugin now uses DB-backed subscriptions and global config
 from nonebot.adapters.onebot.v11 import MessageSegment, PrivateMessageEvent, Bot, Message
 from nonebot.params import CommandArg
 require("nonebot_plugin_apscheduler")
 from nonebot_plugin_apscheduler import scheduler
+from src.common.feature_manager import feature_manager
+from src.common.models import Subscription
+from src.common.resource import resource_manager
+from src.common.config import global_config
+
+feature_manager.register("bilibili动态转发", ": \nbot现在会自动将部分烤肉动态转发到群里。")
+
+# Memory cache for deduplication in current session
+# Format: {group_id: {dynamic_id, ...}}
+SENT_DYNAMICS_CACHE = {}
 
 global EMERGENCY_STOP
-UID_GROUP_MAP = config.bilibili_watch_uid_group_map
+# UID_GROUP_MAP is now deprecated, will load from DB
 INTERVAL = 120
 EMERGENCY_STOP = False
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CACHE_DIR = os.path.join(os.path.join(BASE_DIR, "cache"), "bilibiliRepost")
-os.makedirs(CACHE_DIR, exist_ok=True)
+# CACHE_DIR = os.path.join(os.path.join(BASE_DIR, "cache"), "bilibiliRepost")
+CACHE_DIR = resource_manager.get_data_dir("bilibiliRepost")
 
-logger.info(f"Bilibili Watch Plugin initialized for UIDs: {list(UID_GROUP_MAP.keys())}, Interval: {INTERVAL} seconds")
-assets_dir = os.path.join(BASE_DIR, "assets")
+logger.info(f"Bilibili Watch Plugin initialized. Interval: {INTERVAL} seconds")
+# assets_dir = os.path.join(BASE_DIR, "assets")
 
-with open(os.path.join(assets_dir, "cookie.json"), "r", encoding="utf-8") as f:
-    COOKIE = json.load(f).get("cookie", "")
-cookiePath = os.path.join(assets_dir, "cookie.json")
+# Load Cookie from global config or file (for backward compatibility if needed)
+COOKIE = global_config.bilibili_cookie or ""
 
 def load_cache(uid,group_id):
     cache_file = os.path.join(CACHE_DIR, f'dynamic_cache_{uid}_{group_id}.json')
@@ -63,6 +72,9 @@ def get_user_dynamics(uid):
     return response.json()
 
 async def check_and_send_for_uid(uid, group_id):
+    if not feature_manager.is_enabled(group_id, "bilibili动态转发"):
+        return
+
     cache = load_cache(uid, group_id)
     logger.info(f"cache: {cache}")
     data = get_user_dynamics(uid)
@@ -71,17 +83,12 @@ async def check_and_send_for_uid(uid, group_id):
     # Error handling code remains the same
     if data.get("code") == -352:
         logger.warning(f"B站API请求失败: -352，可能Cookie失效，请更新cookie.txt文件 (UID: {uid})")
-        await bot.send_private_msg(
-            user_id=2447209382,
-            message=f"B站API请求失败: -352，可能Cookie失效，请更新cookie.txt文件 (UID: {uid})"
-        )
+        # Use logger.error to trigger global report instead of hardcoded ID
+        logger.error(f"⚠️ B站Cookie可能失效 (Code -352) - UID: {uid}")
         return
     if data.get("code") == 403 or data.get("code") == -403:
         logger.warning(f"访问被拒绝，Cookie可能已过期或无效，请更新cookie.txt文件 (UID: {uid})")
-        await bot.send_private_msg(
-            user_id=2447209382,
-            message=f"访问被拒绝，Cookie可能已过期或无效，请更新cookie.txt文件 (UID: {uid})"
-        )
+        logger.error(f"⚠️ B站Cookie可能失效 (Code 403) - UID: {uid}")
         return
 
     items = data.get("data", {}).get("items", [])
@@ -104,22 +111,40 @@ async def check_and_send_for_uid(uid, group_id):
         return
 
     # 获取最新的动态ID用于比对
-    latest_cached_id = cache[0] if cache else "0"
+    latest_cached_id = str(cache[0]) if cache else "0"
     
     # 保持现有缓存并准备更新
     new_cache = cache.copy()  # 复制现有缓存而不是创建空列表
 
     # 处理新动态
     new_dynamics = []
+    
+    # Init memory cache for this group if not exists
+    if group_id not in SENT_DYNAMICS_CACHE:
+        SENT_DYNAMICS_CACHE[group_id] = set()
+        # Pre-fill with existing file cache to avoid re-sending on restart if file is fresh
+        for cid in cache:
+            SENT_DYNAMICS_CACHE[group_id].add(str(cid))
+
     for item in sorted_items:
-        dynamic_id = item.get("id_str")
+        dynamic_id = str(item.get("id_str"))
         if not dynamic_id:
             continue
             
         # 如果当前动态ID小于等于最新缓存的ID,说明后面都是旧动态,可以跳出循环
-        if dynamic_id <= latest_cached_id:
-            break
-            
+        # 使用int转换确保数字比较正确 (B站ID是纯数字字符串)
+        try:
+            if int(dynamic_id) <= int(latest_cached_id):
+                break
+        except ValueError:
+            # Fallback to string comparison if ID is not int (unlikely for Bilibili)
+            if dynamic_id <= latest_cached_id:
+                break
+        
+        # Memory Deduplication Check
+        if dynamic_id in SENT_DYNAMICS_CACHE[group_id]:
+            continue
+
         new_dynamics.append(item)
 
     # 倒序处理,确保最新的动态最后发送
@@ -252,14 +277,19 @@ async def check_and_send_for_uid(uid, group_id):
         # 其他类型
         else:
             msg_list.append(f"暂不支持的动态类型：{dynamic_type}")
-            await bot.send_private_msg(user_id = 2447209382, messgage = msg_list)
-            await bot.finish()
+            try:
+                await bot.send_private_msg(user_id=global_config.superuser_id, message="\n".join(msg_list))
+            except Exception:
+                logger.error("Failed to notify superuser for unsupported dynamic type")
+            return
 
         try:
             await bot.send_group_msg(group_id=group_id, message="\n".join(msg_list))
             # 发送成功后将新动态ID添加到缓存开头
             if dynamic_id not in new_cache:
                 new_cache.insert(0, dynamic_id)
+            # Update memory cache
+            SENT_DYNAMICS_CACHE[group_id].add(dynamic_id)
         except Exception as e:
             logger.error(f"发送失败: {e}")
 
@@ -355,6 +385,38 @@ async def bilibili_watch_job():
     if EMERGENCY_STOP:
         logger.error("Bilibili动态监控已紧急停止。")
         return
-    for uid, group_id in UID_GROUP_MAP.items():
-        await check_and_send_for_uid(uid, group_id)
+        
+    # Load subscriptions from DB
+    try:
+        subs = await Subscription.filter(sub_type="bilibili").all()
+    except Exception as e:
+        logger.error(f"Failed to load subscriptions: {e}")
+        return
+
+    # Group by UID to avoid duplicate requests
+    # {uid: [group_id, ...]}
+    uid_map = {}
+    for sub in subs:
+        uid = sub.sub_id
+        if uid not in uid_map:
+            uid_map[uid] = []
+        uid_map[uid].append(sub.group_id)
+
+    # Fallback: if no subscriptions present, try legacy config mapping
+    if not uid_map:
+        try:
+            from .config import config as legacy_cfg
+            for uid, group_id in legacy_cfg.bilibili_watch_uid_group_map.items():
+                await check_and_send_for_uid(uid, group_id)
+        except Exception:
+            pass
+
+    for uid, group_ids in uid_map.items():
+        # Optimization: Fetch once, send to multiple groups
+        # But check_and_send_for_uid currently handles one group.
+        # For now, iterate groups to keep logic simple, or refactor check_and_send_for_uid.
+        # Given the existing structure, check_and_send_for_uid relies on per-group cache.
+        # So we just iterate.
+        for group_id in group_ids:
+            await check_and_send_for_uid(uid, group_id)
 

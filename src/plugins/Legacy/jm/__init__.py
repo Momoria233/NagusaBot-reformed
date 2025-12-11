@@ -1,8 +1,3 @@
-# 当前存在的bug：
-# 群聊部分车牌号无法上传 eg：1096583，提示下载成功 无报错 但是没有文件
-# 私聊无法上传文件，会报nonebot.adapters.onebot.v11.exception.ActionFailed: ActionFailed(status='failed', retcode=1, data=None, echo='1')
-
-
 from nonebot import get_driver, logger
 from nonebot.adapters.onebot.v11 import (
     Bot,
@@ -15,72 +10,96 @@ from nonebot.params import CommandArg
 from nonebot.plugin import on_command
 from nonebot.rule import to_me
 
-from .config import Config
 from .jmdownload import jm_download, jm_init
+from src.common.feature_manager import feature_manager
+from src.common.config import global_config
+
+# Register feature
+feature_manager.register("jm", ": \n使用/jm 车牌号 可以让bot下载jm上相应的本子。")
 
 driver = get_driver()
 
-
 @driver.on_startup
 async def init_func():
-    logger.info("loading config...")
+    logger.info("loading jm config...")
     jm_init()
-    logger.info("config loaded")
+    logger.info("jm config loaded")
 
 
 jmDown = on_command("jm", rule=to_me())
 
-
 @jmDown.handle()
-async def download_func(bot: Bot, event: GroupMessageEvent, args: Message = CommandArg()):
-    if not event.group_id in Config.group_whitelist:
-        jmDown.skip()
-        return
+async def download_group(bot: Bot, event: GroupMessageEvent, args: Message = CommandArg()):
+    if not feature_manager.is_enabled(event.group_id, "jm"):
+        await jmDown.finish() # Use finish to stop if disabled
+        
     reply = MessageSegment.reply(event.message_id)
     at = MessageSegment.at(event.get_user_id())
-    if number := args.extract_plain_text():
+    
+    if number := args.extract_plain_text().strip():
         logger.info(f"downloading jmcode {number}")
+        
+        # Notify user that download started (optional, but good UX)
+        # await jmDown.send(Message([reply, at, MessageSegment.text(" 开始下载，请稍候...")]))
+        
         code, msg = await jm_download(number)
+        
         if code != 0:
             text = MessageSegment.text(" " + msg)
             await jmDown.finish(message=Message([reply, at, text]))
-        logger.info(int(event.get_user_id()))
-        logger.info(msg)
-        logger.info(f"{number}.pdf")
+            
+        logger.info(f"Download success: {msg}")
+        
         try:
+            # msg is the absolute file path string
             await bot.call_api("upload_group_file", group_id=event.group_id, file=msg, name=f"{number}.pdf")
+            success_msg = "下载并上传成功"
+            text = MessageSegment.text(" " + success_msg)
+            await jmDown.finish(message=Message([reply, at, text]))
         except Exception as e:
-            logger.error(e)
-        msg = "下载成功"
-        text = MessageSegment.text(" " + msg)
-        await jmDown.finish(message=Message([reply, at, text]))
+            logger.error(f"Upload failed: {e}")
+            text = MessageSegment.text(f" 上传失败: {str(e)}")
+            await jmDown.finish(message=Message([reply, at, text]))
 
     else:
         msg = "请输入车牌号"
         text = MessageSegment.text(" " + msg)
         await jmDown.finish(message=Message([reply, at, text]))
+
+
 @jmDown.handle()
-async def download_func(bot: Bot, event: PrivateMessageEvent, args: Message = CommandArg()):
-    if not Config.allow_private:
-        if event.get_user_id() not in Config.user_whitelist:
-            logger.info("not in whitelist")
-            jmDown.skip()
-            return
+async def download_private(bot: Bot, event: PrivateMessageEvent, args: Message = CommandArg()):
+    user_id = event.get_user_id()
+    
+    # Check private permission
+    if not global_config.jm_allow_private:
+        # If private not allowed globally, check whitelist
+        if int(user_id) not in global_config.jm_user_whitelist:
+            logger.info(f"User {user_id} not in whitelist and private jm disabled")
+            await jmDown.finish("私聊下载功能未开启。")
+
     reply = MessageSegment.reply(event.message_id)
-    at = MessageSegment.at(event.get_user_id())
-    if number := args.extract_plain_text():
+    
+    if number := args.extract_plain_text().strip():
         logger.info(f"downloading jmcode {number}")
+        
         code, msg = await jm_download(number)
+        
         if code != 0:
             text = MessageSegment.text(" " + msg)
-            await jmDown.finish(message=Message([reply, at, text]))
-        # logger.info(int(event.get_user_id()))
-        await bot.call_api("upload_private_file", user_id=int(event.get_user_id()), file=msg, name=f"{number}.pdf")
-        msg = "下载成功"
-        text = MessageSegment.text(" " + msg)
-        await jmDown.finish(message=Message([reply, at, text]))
+            await jmDown.finish(message=Message([reply, text]))
+            
+        try:
+            await bot.call_api("upload_private_file", user_id=int(user_id), file=msg, name=f"{number}.pdf")
+            success_msg = "下载并上传成功"
+            text = MessageSegment.text(" " + success_msg)
+            await jmDown.finish(message=Message([reply, text]))
+        except Exception as e:
+            logger.error(f"Upload failed: {e}")
+            text = MessageSegment.text(f" 上传失败: {str(e)}")
+            await jmDown.finish(message=Message([reply, text]))
 
     else:
         msg = "请输入车牌号"
         text = MessageSegment.text(" " + msg)
-        await jmDown.finish(message=Message([reply, at, text]))
+        await jmDown.finish(message=Message([reply, text]))

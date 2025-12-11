@@ -19,73 +19,58 @@ from nonebot.adapters.onebot.v11 import (
 from nonebot.typing import T_State
 from nonebot.params import CommandArg
 
-from .getGroupConfig import *
+# Import FeatureManager
+from src.common.feature_manager import feature_manager
+
+# Register /help feature
+feature_manager.register("/help", ": \nat bot发送/help可以查看当前群内可使用的功能列表。")
 
 groupfwdmsg = on_command("help",aliases={"帮助"})
-
-assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 
 @groupfwdmsg.handle()
 async def groupfwdmsg_handle(bot: Bot, event: GroupMessageEvent, state: T_State):
     group_id = str(event.group_id)
-    try:
-        with open(os.path.join(assets_dir,"config.json"), "r", encoding="utf-8") as f:
-            config = json.load(f)
-    except Exception as e:
-        logger.error(e)
-        await groupfwdmsg.finish(f"json读取错误：{e}")
-
-    ALL_FEATURES = config.get("all_features", {})
-
-    if group_id not in config:
-        enabled_features = list(ALL_FEATURES.keys())
-    else:
-        group_config = config[group_id]
-        ban_list = group_config.get("ban_list", [])
-        enabled_features = [feature for feature in ALL_FEATURES if feature not in ban_list]
-
-    if not enabled_features:
-        help_text = ["本群目前没有启用任何功能"]
-    else:
-        help_text = enabled_features
-
-    content = []
-    for feature in help_text:
-        description = ALL_FEATURES.get(feature, "暂无描述")
-        content.append({
-            "type": "text",
-            "data": {
-                "text": f"{feature} {description}"
-            }
-        })
-
+    
+    # Get enabled features
+    enabled_features = feature_manager.get_group_features(group_id)
+    
     helpMsg = {
         "group_id": event.group_id,
         "messages": []
     }
 
-    for feature in help_text:
-        node_content = []
-        description = ALL_FEATURES.get(feature, "暂无描述")
-        node_content.append({
+    if not enabled_features:
+        # No features enabled
+        node_content = [{
             "type": "text",
+            "data": {"text": "本群目前没有启用任何功能"}
+        }]
+        helpMsg["messages"].append({
+            "type": "node",
             "data": {
-                "text": f"{feature} {description}"
+                "user_id": "3856749436",
+                "nickname": "名草Bot",
+                "content": node_content
             }
         })
-        helpMsg["messages"].append(
-            {
+    else:
+        for feature, description in enabled_features.items():
+            node_content = [{
+                "type": "text",
+                "data": {"text": f"{feature} {description}"}
+            }]
+            helpMsg["messages"].append({
                 "type": "node",
                 "data": {
                     "user_id": "3856749436",
                     "nickname": "名草Bot",
                     "content": node_content
                 }
-            },
-        )
-    logger.info(helpMsg)
+            })
+
+    logger.info(f"Sending help message to group {group_id}")
 
     try:
         await bot.call_api("send_group_forward_msg", **helpMsg)
     except Exception as e:
-        logger.error(e)
+        logger.error(f"Failed to send help message: {e}")

@@ -1,29 +1,78 @@
 import re
+import json
 from datetime import datetime
 import pytz
+import os
+from pathlib import Path
 
-from nonebot import logger, on_notice
+from nonebot import logger, on_notice, on_command
 from nonebot.adapters.onebot.v11 import (
     Bot,
     GroupIncreaseNoticeEvent,
     Message,
     MessageSegment,
+    GroupMessageEvent
 )
+from nonebot.permission import SUPERUSER
+from nonebot.adapters.onebot.v11.permission import GROUP_ADMIN, GROUP_OWNER
+from nonebot.params import CommandArg
 from nonebot.typing import T_State
-import os
+
 from .config import Config
+from src.common.feature_manager import feature_manager
+from src.common.resource import resource_manager
 
-assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
+# 注册功能
+feature_manager.register("入群欢迎", ": \n新人入群自动欢迎，如果需要更改自动欢迎的内容请使用 /set_welcome 指令。")
+
+assets_dir = resource_manager.get_bundled_asset_dir(__file__)
+data_dir = resource_manager.get_data_dir("welcome")
+config_file = data_dir / "config.json"
+
+welcome_config = {}
+
+def load_config():
+    global welcome_config
+    if config_file.exists():
+        try:
+            with open(config_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                welcome_config = {int(k): v for k, v in data.items()}
+        except Exception as e:
+            logger.error(f"Failed to load welcome config: {e}")
+            welcome_config = {}
+    else:
+        logger.info("Welcome config not found, migrating from legacy Config...")
+        welcome_config = Config.welcome_message.copy()
+        save_config()
+
+def save_config():
+    try:
+        with open(config_file, "w", encoding="utf-8") as f:
+            json.dump(welcome_config, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        logger.error(f"Failed to save welcome config: {e}")
+
+load_config()
+
 NewWelcome = on_notice()
-
 
 @NewWelcome.handle()
 async def welcoming(bot: Bot, event: GroupIncreaseNoticeEvent, state: T_State):
-    if not event.group_id in Config.welcome_message:
+    if not feature_manager.is_enabled(event.group_id, "入群欢迎"):
         await NewWelcome.finish()
-    logger.info(f"match group id {event.group_id}")
-    parts = re.split(r"\{([^}]+)\}", Config.welcome_message[event.group_id])
+    
+    group_id = event.group_id
+    if group_id not in welcome_config:
+        # No welcome message set for this group
+        return
+
+    logger.info(f"match group id {group_id}")
+    raw_message = welcome_config[group_id]
+    
+    parts = re.split(r"\{([^}]+)\}", raw_message)
     message_list: list[MessageSegment] = []
+    
     for i, part in enumerate(parts):
         if i % 2 == 0:
             if part:
@@ -33,12 +82,19 @@ async def welcoming(bot: Bot, event: GroupIncreaseNoticeEvent, state: T_State):
                 case "at":
                     message_list.append(MessageSegment.at(event.get_user_id()))
                 case str() as string if re.match(r"img:(.*)", string):
-                    logger.info(re.match(r"img:(.*)", string).group(1))
-                    logger.info(os.path.join(assets_dir, re.match(r"img:(.*)", string).group(1)))
-                    message_list.append(MessageSegment.image(os.path.join(assets_dir,re.match(r"img:(.*)", string).group(1))))
+                    img_name = re.match(r"img:(.*)", string).group(1)
+                    img_path = assets_dir / img_name
+                    logger.info(f"Loading image: {img_path}")
+                    if img_path.exists():
+                        message_list.append(MessageSegment.image(img_path))
+                    else:
+                        logger.warning(f"Image not found: {img_path}")
+                        message_list.append(MessageSegment.text(f"[图片缺失: {img_name}]"))
                 case str() as string if re.match(r"file:(.*)", string):
-                    logger.info(re.match(r"file:(.*)", string).group(1))
-                    message_list.append(MessageSegment.file(os.path.join(assets_dir, re.match(r"file:(.*)", string).group(1))))
+                    file_name = re.match(r"file:(.*)", string).group(1)
+                    file_path = assets_dir / file_name
+                    if file_path.exists():
+                        message_list.append(MessageSegment.file(file_path))
                 case str() as string if re.match(r"countdown:(.*)", string):
                     target_date_str = re.match(r"countdown:(.*)", string).group(1).strip()
                     try:
@@ -53,7 +109,19 @@ async def welcoming(bot: Bot, event: GroupIncreaseNoticeEvent, state: T_State):
                             message_list.append(MessageSegment.text("已过期"))
                     except ValueError:
                         logger.error(f"Invalid date format for countdown: {target_date_str}")
-                        message_list.append(MessageSegment.text("几"))
+                        message_list.append(MessageSegment.text("?"))
                 
-
     await NewWelcome.finish(Message(message_list))
+
+# 新增：设置欢迎语指令
+set_welcome_cmd = on_command("set_welcome", aliases={"设置欢迎语"}, permission=SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
+
+@set_welcome_cmd.handle()
+async def set_welcome_handle(bot: Bot, event: GroupMessageEvent, args: Message = CommandArg()):
+    msg = args.extract_plain_text().strip()
+    if not msg:
+        await set_welcome_cmd.finish("请提供欢迎语内容。支持占位符：{at}, {img:文件名}, {countdown:YYYY-MM-DD}")
+    
+    welcome_config[event.group_id] = msg
+    save_config()
+    await set_welcome_cmd.finish("当前群欢迎语已更新。")

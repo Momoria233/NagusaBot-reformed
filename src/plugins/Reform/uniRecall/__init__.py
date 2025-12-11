@@ -7,14 +7,19 @@ from nonebot.adapters.onebot.v11 import (
     Bot, MessageEvent, Message, GroupMessageEvent, MessageSegment
 )
 from nonebot.params import EventPlainText
-from .config import Config
+from src.common.feature_manager import feature_manager
+from src.common.resource import resource_manager
+from src.common.config import global_config
 
-assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
-revokeRec = os.path.join(assets_dir, "revoke_records.json")
+feature_manager.register("广告撤回", ": \n在群内广告下面回复“请注意广告时间”可以撤回广告，并且加以处罚记录。")
+feature_manager.register("自助撤回", ": \n回复自己的消息并发送“bot撤回一下”，让机器人协助撤回（通常用于撤回超时无法自己撤回的消息，前提是bot是管理员）。")
+
+# Data storage: data/plugins/uniRecall/revoke_records.json
+data_dir = resource_manager.get_data_dir("uniRecall")
+revokeRec = data_dir / "revoke_records.json"
 tz = timezone(timedelta(hours=8))
 
-if not os.path.exists(revokeRec):
-    os.makedirs(assets_dir, exist_ok=True)
+if not revokeRec.exists():
     with open(revokeRec, "w", encoding="utf-8") as f:
         json.dump({}, f, ensure_ascii=False, indent=2)
 
@@ -55,7 +60,7 @@ async def recall_trigger(
 
 async def handle_advertisement(bot: Bot, event: GroupMessageEvent):
     group_id = event.group_id
-    if group_id not in Config.group_whitelist:
+    if not feature_manager.is_enabled(group_id, "广告撤回"):
         return
 
     reply_user = event.reply.sender.user_id
@@ -88,8 +93,9 @@ async def handle_advertisement(bot: Bot, event: GroupMessageEvent):
 
     if last_time and (now - last_time) < timedelta(minutes=20):
         LoggingMsg = f"【冷却期广告】\n用户 {reply_user}\n 群 {group_id}\n内容：{adMsg}\n触发人：{trigger_user}\n次数：{count}"
-        await bot.send_private_msg(user_id=2447209382, message=LoggingMsg)
-        await bot.send_group_msg(group_id=1036382420, message=LoggingMsg)
+        await bot.send_private_msg(user_id=global_config.superuser_id, message=LoggingMsg)
+        if global_config.log_group_id:
+            await bot.send_group_msg(group_id=global_config.log_group_id, message=LoggingMsg)
         await RecallTrigger.finish("20分钟内已处理过，无需重复。")
         return
 
@@ -102,19 +108,23 @@ async def handle_advertisement(bot: Bot, event: GroupMessageEvent):
     save_records()
 
     LoggingMsg = f"用户 {reply_user} 在群 {group_id} 发送了广告，内容为“{adMsg}”\n触发人：{trigger_user}，当前违规次数：{count}。"
-    await bot.send_private_msg(user_id=2447209382, message=LoggingMsg)
-    await bot.send_group_msg(group_id=1036382420, message=LoggingMsg)
+    await bot.send_private_msg(user_id=global_config.superuser_id, message=LoggingMsg)
+    if global_config.log_group_id:
+        await bot.send_group_msg(group_id=global_config.log_group_id, message=LoggingMsg)
 
     # 处罚逻辑
     if count == 1:
         await RecallTrigger.finish(MessageSegment.at(reply_user)+" ⚠️本群广告时间为12-13点，第一次违规提醒，消息已被撤回。请注意群规。")
     elif count == 2:
         await bot.set_group_ban(group_id=group_id, user_id=reply_user, duration=7*24*3600)
-        await RecallTrigger.finish(MessageSegment.at(reply_user+" ⚠️本群广告时间为12-13点，这是第二次违规，已被禁言 7 天，请注意群规。"))
+        await RecallTrigger.finish(MessageSegment.at(reply_user)+" ⚠️本群广告时间为12-13点，这是第二次违规，已被禁言 7 天，请注意群规。")
     elif count >= 3:
         await RecallTrigger.finish("此为第三次违规发送广告，可以被移出群聊。")
 
 async def handle_user_recall(bot: Bot, event: GroupMessageEvent):
+    if not feature_manager.is_enabled(event.group_id, "自助撤回"):
+        return
+
     reply_user = event.reply.sender.user_id
     if reply_user != event.user_id:
         await RecallTrigger.finish(MessageSegment.at(event.user_id)+" 你只能撤回你自己的消息。")

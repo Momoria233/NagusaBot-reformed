@@ -3,8 +3,9 @@ from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 import textwrap
 import os
+from src.common.resource import resource_manager
 
-assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
+assets_dir = resource_manager.get_bundled_asset_dir(__file__)
 
 async def draw_quote(
     avatar_bytes: bytes,
@@ -26,7 +27,7 @@ async def draw_quote(
     avatar.putalpha(mask)
 
     # 文字部分参数
-    font_path = os.path.join(assets_dir,"SourceHanSansSC-VF.otf")  # 可改为你系统的字体
+    font_path = assets_dir / "SourceHanSansSC-VF.otf"  # 可改为你系统的字体
     font_name = ImageFont.truetype(font_path, 36)
     font_text = ImageFont.truetype(font_path, 32)
     font_time = ImageFont.truetype(font_path, 26)

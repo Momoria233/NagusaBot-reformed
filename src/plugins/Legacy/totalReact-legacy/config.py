@@ -1,8 +1,5 @@
 class Config:
-    cooldown_period = 30
-    cooldown_whitelist = ["2447209382"]
-    activate_eat = True
-    activate_TotalAst = True
+    # Static Data Lists
     food = [
         "白菜",
         "史",
@@ -64,7 +61,7 @@ class Config:
     ]
     Total_Assault_bosslist = ["goz", "大蛇", "hod", "猫鬼", "主教", "寿司人", "气垫船若藻", "鸡斯拉", "切赛德", "白&黑", "格里高利"]
     Total_Assault_difficulty = ["Normal", "Hard", "VeryHard", "Hardcore", "extreme", "ins", "Torment"]
-    activate_poke = True
+    
     react = [
         "唔...",
         "唔嘿",
@@ -72,10 +69,6 @@ class Config:
         "(´･ω･`)？",
     ]
 
-    activate_congrat = True
     Congrats = [
         "老师是手气王，真幸运呢 恭喜",
     ]
-
-    ai_group_whitelist = [225173408, 996101999]
-    ai_usr_whitelist = ["2891544717"]

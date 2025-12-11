@@ -3,9 +3,10 @@ from io import BytesIO
 import os
 import json
 from typing import Dict, List, Tuple
+from src.common.resource import resource_manager
 
-assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
-config_path = os.path.join(assets_dir, "config.json")
+assets_dir = resource_manager.get_bundled_asset_dir(__file__)
+config_path = assets_dir / "config.json"
 
 TEMPLATES: List[Dict] = []
 _FONT_CACHE: Dict[Tuple[str, int], ImageFont.FreeTypeFont] = {}
@@ -15,7 +16,7 @@ def _load_templates_once() -> List[Dict]:
     if TEMPLATES:
         return TEMPLATES
 
-    if not os.path.exists(config_path):
+    if not config_path.exists():
         raise FileNotFoundError(f"Template config not found: {config_path}")
 
     with open(config_path, "r", encoding="utf-8") as f:
@@ -37,8 +38,8 @@ def _get_font(font_path: str, size: int) -> ImageFont.FreeTypeFont:
     if key in _FONT_CACHE:
         return _FONT_CACHE[key]
 
-    full_path = os.path.join(assets_dir, font_path)
-    font = ImageFont.truetype(full_path, size)
+    full_path = assets_dir / font_path
+    font = ImageFont.truetype(str(full_path), size)
     _FONT_CACHE[key] = font
     return font
 
@@ -62,7 +63,7 @@ def wrap_text(text: str, font: ImageFont.FreeTypeFont, max_width: int) -> str:
     return "\n".join(lines)
 
 def draw_text_on_template(template: Dict, text: str, color: str = "#000000") -> BytesIO:
-    img_path = os.path.join(assets_dir, template["path"])
+    img_path = assets_dir / template["path"]
     font_rel_path = template["font_path"]
 
     with Image.open(img_path).convert("RGBA") as img:
@@ -89,6 +90,11 @@ def draw_text_on_template(template: Dict, text: str, color: str = "#000000") -> 
                 break
 
             font_size -= 2
+        
+        # Calculate centering based on actual text bounds
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+        
         text_x = x + (w - text_width) / 2
         text_y = y + (h - text_height) / 2
 

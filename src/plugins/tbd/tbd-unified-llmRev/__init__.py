@@ -1,4 +1,5 @@
-MAX_HISTORY = 50
+from src.common.feature_manager import feature_manager
+feature_manager.register("rev语录", ": \n使用/rev xx可以让bot根据过去xx条聊天记录返回一条人机语录，\n使用/rev-r xx可以同时返回理由。")
 
 group_message_history: dict[int, list[str]] = {}
 
@@ -32,6 +33,8 @@ group_message_history: dict[int, list[str]] = {}
 
 # @revL.handle()
 # async def rev(bot: Bot, event: GroupMessageEvent, matcher: Matcher, args: Message = CommandArg()):
+#     if not feature_manager.is_enabled(event.group_id, "rev语录"):
+#         await matcher.finish()
 #     group_id = event.group_id
 #     # if not event.user_id in Config.usr_whitelist:
 #     #     await matcher.finish()
@@ -68,6 +71,8 @@ group_message_history: dict[int, list[str]] = {}
 
 # @revR.handle()
 # async def revr(bot: Bot, event: GroupMessageEvent, matcher: Matcher, args: Message = CommandArg()):
+#     if not feature_manager.is_enabled(event.group_id, "rev语录"):
+#         await matcher.finish()
 #     group_id = event.group_id
 #     # if not event.user_id in Config.usr_whitelist:
 #     #     await matcher.finish()
