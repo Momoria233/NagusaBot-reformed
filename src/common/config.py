@@ -38,6 +38,8 @@ class Config(BaseSettings):
 
     # UniRecall Plugin
     log_group_id: Optional[int] = 1036382420
+    backup_group_id: Optional[int] = None
+    uni_recall_trusted_users: Set[int] = {2447209382, 2743654437}
 
     class Config:
         extra = "ignore"

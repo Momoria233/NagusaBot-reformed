@@ -9,6 +9,7 @@ from pathlib import Path
 from src.common.feature_manager import feature_manager
 from src.common.config import global_config
 from src.common.resource import resource_manager
+from src.common.logger import get_group_name, get_user_display_name
 
 # Register features
 feature_manager.register("自动入群申请", ": 对新的入群申请进行正则表达式或json匹配并自动通过，对于未匹配成功的将进入向管理员私信申请手动匹配的功能。")
@@ -52,13 +53,15 @@ async def wait_for_reply(key):
 
 async def check_manual_approve(bot: Bot, event: GroupRequestEvent, type: str, answer: str, block=False):
     superuser = global_config.superuser_id
+    gname = await get_group_name(bot, event.group_id)
+    uname = await get_user_display_name(bot, event.user_id)
     
     if type == "autoMatchFailed":
-        msg = (f"Group {event.group_id} request from {event.user_id} 匹配失败。 \n申请提示词: {answer}，请在5分钟内回复“是”通过，“否”拒绝。")
+        msg = (f"群 {gname}({event.group_id}) 的 {uname}({event.user_id}) 入群匹配失败。\n申请提示词: {answer}，请在5分钟内回复“是”通过，“否”拒绝。")
         logger.info(msg)
         await bot.send_private_msg(user_id=superuser, message=msg)
     elif type == "manualApprove":
-        msg = (f"Group {event.group_id} request from {event.user_id} 需要人工审核，\n申请提示词: {answer}，请在5分钟内回复“是”通过，“否”拒绝。")
+        msg = (f"群 {gname}({event.group_id}) 的 {uname}({event.user_id}) 需要人工审核。\n申请提示词: {answer}，请在5分钟内回复“是”通过，“否”拒绝。")
         logger.info(msg)
         await bot.send_private_msg(user_id=superuser, message=msg)
     else:
@@ -72,15 +75,15 @@ async def check_manual_approve(bot: Bot, event: GroupRequestEvent, type: str, an
         
         if result == "是":
             await event.approve(bot)
-            await bot.send_private_msg(user_id=superuser, message=f"已通过 {event.user_id} 的申请。")
+            await bot.send_private_msg(user_id=superuser, message=f"已通过 {uname}({event.user_id}) 在群 {gname}({event.group_id}) 的申请。")
         elif result == "否":
             await event.reject(bot)
-            await bot.send_private_msg(user_id=superuser, message=f"已拒绝 {event.user_id} 的申请。")
+            await bot.send_private_msg(user_id=superuser, message=f"已拒绝 {uname}({event.user_id}) 在群 {gname}({event.group_id}) 的申请。")
         else:
             await bot.send_private_msg(user_id=superuser, message=f"未知回复，已结束处理。回复：{result}。")
             
     except asyncio.TimeoutError:
-        await bot.send_private_msg(user_id=superuser, message=f"针对 {event.user_id} 的审核超时，已结束处理。")
+        await bot.send_private_msg(user_id=superuser, message=f"针对 {uname}({event.user_id}) 的审核超时，已结束处理。")
     finally:
         pending_requests.pop(key, None)
 
