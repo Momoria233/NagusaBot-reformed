@@ -1,15 +1,40 @@
-tortoise-orm>=0.20.0
-aiosqlite>=0.19.0
-aerich>=0.7.2
-asyncpg>=0.28.0
-nonebot2>=2.0.0
-nonebot-adapter-onebot>=2.0.0
+# ===== NoneBot 核心 =====
+nonebot2>=2.4.0
+nonebot-adapter-onebot>=2.4.0
 nonebot-adapter-qq>=1.0.0
-nonebot-plugin-apscheduler>=0.3.0
-httpx>=0.24.0
-pydantic>=1.10.0
-Pillow>=9.0.0
-qrcode>=7.0
-requests>=2.25.0
-pytz>=2021.1
-openai>=1.0.0
+nonebot-plugin-apscheduler>=0.5.0
+nb-cli>=1.0.0
+
+# ===== Web / API =====
+fastapi>=0.110.0
+uvicorn>=0.30.0
+httpx>=0.28.0
+requests>=2.32.0
+python-dotenv>=1.0.0
+
+# ===== 数据库 / ORM =====
+tortoise-orm>=0.20.0
+aerich>=0.7.2
+aiosqlite>=0.19.0
+asyncpg>=0.28.0
+
+# ===== AI / 聊天 =====
+openai>=1.70.0
+nonechat>=0.3.0
+
+# ===== 图片 / 文件处理 =====
+Pillow>=11.0.0
+qrcode>=8.0
+img2pdf>=0.6.0
+pikepdf>=9.0.0
+lxml>=5.0.0
+
+# ===== 其他业务库 =====
+jmcomic>=2.5.0
+loguru>=0.7.0
+rich>=13.0.0
+tqdm>=4.60.0
+PyYAML>=6.0
+pycryptodome>=3.20.0
+pytz>=2025.1
+tzlocal>=5.0

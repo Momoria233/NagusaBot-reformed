@@ -3,8 +3,8 @@
 
 import os
 import json
-import requests
-import time
+import httpx
+from typing import Optional
 from io import BytesIO
 import qrcode
 from nonebot import get_bot, require, get_driver, on_command, on_regex
@@ -41,6 +41,23 @@ logger.info(f"Bilibili Watch Plugin initialized. Interval: {INTERVAL} seconds")
 # Load Cookie from global config or file (for backward compatibility if needed)
 COOKIE = global_config.bilibili_cookie or ""
 
+_http_client: Optional[httpx.AsyncClient] = None
+
+driver = get_driver()
+
+@driver.on_startup
+async def _init_http_client():
+    global _http_client
+    if _http_client is None:
+        _http_client = httpx.AsyncClient(timeout=httpx.Timeout(15.0))
+
+@driver.on_shutdown
+async def _close_http_client():
+    global _http_client
+    if _http_client is not None:
+        await _http_client.aclose()
+        _http_client = None
+
 def load_cache(uid,group_id):
     cache_file = os.path.join(CACHE_DIR, f'dynamic_cache_{uid}_{group_id}.json')
     if os.path.exists(cache_file):
@@ -53,7 +70,7 @@ def save_cache(uid, group_id,cache):
     with open(cache_file, 'w') as f:
         json.dump(cache, f)
 
-def get_user_dynamics(uid):
+async def get_user_dynamics(uid):
     url = f"https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?host_mid={uid}"
     headers = {
         "User-Agent": (
@@ -66,9 +83,19 @@ def get_user_dynamics(uid):
         "Accept-Language": "zh-CN,zh;q=0.9",
         "Origin": "https://space.bilibili.com",
         "Connection": "keep-alive",
-        "Cookie": COOKIE,
     }
-    response = requests.get(url, headers=headers)
+    if COOKIE:
+        headers["Cookie"] = COOKIE
+
+    client = _http_client
+    if client is None:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(15.0)) as tmp_client:
+            response = await tmp_client.get(url, headers=headers)
+            response.raise_for_status()
+            return response.json()
+
+    response = await client.get(url, headers=headers)
+    response.raise_for_status()
     return response.json()
 
 async def check_and_send_for_uid(uid, group_id):
@@ -77,7 +104,11 @@ async def check_and_send_for_uid(uid, group_id):
 
     cache = load_cache(uid, group_id)
     logger.info(f"cache: {cache}")
-    data = get_user_dynamics(uid)
+    try:
+        data = await get_user_dynamics(uid)
+    except Exception as e:
+        logger.warning(f"B站API请求失败: {e} (UID: {uid})")
+        return
     bot = get_bot()
     
     # Error handling code remains the same

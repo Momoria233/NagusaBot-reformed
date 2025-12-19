@@ -50,7 +50,7 @@ async def wait_for_reply(key):
     pending_requests[key] = fut
     return await fut
 
-async def check_manual_approve(bot: Bot, event: GroupRequestEvent, type: str, answer: str):
+async def check_manual_approve(bot: Bot, event: GroupRequestEvent, type: str, answer: str, block=False):
     superuser = global_config.superuser_id
     
     if type == "autoMatchFailed":
@@ -86,7 +86,7 @@ async def check_manual_approve(bot: Bot, event: GroupRequestEvent, type: str, an
 
 GroupRequest = on_request(priority=1)
 @GroupRequest.handle()
-async def handle_group_request(bot: Bot, event: GroupRequestEvent):
+async def handle_group_request(bot: Bot, event: GroupRequestEvent,block=False):
     logger.info(f"Group {event.group_id} request from {event.user_id}")
     
     if not feature_manager.is_enabled(event.group_id, "自动入群申请"):
