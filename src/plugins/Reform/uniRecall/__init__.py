@@ -66,6 +66,8 @@ async def recall_trigger(
     event: GroupMessageEvent,
     text: str = EventPlainText()
 ):
+    if not isinstance(event, GroupMessageEvent):
+        await RecallTrigger.finish("此功能仅支持群聊。")
 
     if not event.reply:
         await RecallTrigger.finish("请回复需要处理的消息。")
@@ -195,10 +197,11 @@ async def handle_user_recall(bot: Bot, event: GroupMessageEvent):
     reply_user = event.reply.sender.user_id
     if reply_user != event.user_id:
         await RecallTrigger.finish(MessageSegment.at(event.user_id)+" 你只能撤回你自己的消息。")
-
     try:
         await bot.delete_msg(message_id=event.reply.message_id)
         await RecallTrigger.finish(MessageSegment.at(event.user_id)+" 已撤回。")
+    except nonebot.exceptions.FinishedException:
+        return
     except Exception as e:
         await RecallTrigger.finish(MessageSegment.at(event.user_id)+f" 撤回失败：{e}")
 
@@ -206,6 +209,8 @@ approval_msg = on_message(priority=1)
 
 @approval_msg.handle()
 async def handle_approval_msg(bot: Bot, event: GroupMessageEvent):
+    if not isinstance(event, GroupMessageEvent):
+        return
     if not global_config.log_group_id or event.group_id != global_config.log_group_id:
         return
     msg_text = event.message.extract_plain_text().strip()

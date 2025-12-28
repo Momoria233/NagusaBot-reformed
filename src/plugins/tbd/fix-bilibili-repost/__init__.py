@@ -3,10 +3,8 @@
 
 import os
 import json
-import requests
-import time
-import asyncio
-import random
+import httpx
+from typing import Optional
 from io import BytesIO
 import qrcode
 from nonebot import get_bot, require, get_driver, on_command, on_regex
@@ -21,8 +19,6 @@ from src.common.feature_manager import feature_manager
 from src.common.models import Subscription
 from src.common.resource import resource_manager
 from src.common.config import global_config
-
-from nonebot.exception import FinishedException
 
 feature_manager.register("bilibili动态转发", ": \nbot现在会自动将部分烤肉动态转发到群里。")
 
@@ -42,8 +38,25 @@ CACHE_DIR = resource_manager.get_data_dir("bilibiliRepost")
 logger.info(f"Bilibili Watch Plugin initialized. Interval: {INTERVAL} seconds")
 # assets_dir = os.path.join(BASE_DIR, "assets")
 
-def get_bilibili_cookie() -> str:
-    return global_config.bilibili_cookie or ""
+# Load Cookie from global config or file (for backward compatibility if needed)
+COOKIE = global_config.bilibili_cookie or ""
+
+_http_client: Optional[httpx.AsyncClient] = None
+
+driver = get_driver()
+
+@driver.on_startup
+async def _init_http_client():
+    global _http_client
+    if _http_client is None:
+        _http_client = httpx.AsyncClient(timeout=httpx.Timeout(15.0))
+
+@driver.on_shutdown
+async def _close_http_client():
+    global _http_client
+    if _http_client is not None:
+        await _http_client.aclose()
+        _http_client = None
 
 def load_cache(uid,group_id):
     cache_file = os.path.join(CACHE_DIR, f'dynamic_cache_{uid}_{group_id}.json')
@@ -57,16 +70,8 @@ def save_cache(uid, group_id,cache):
     with open(cache_file, 'w') as f:
         json.dump(cache, f)
 
-def get_user_dynamics(uid):
+async def get_user_dynamics(uid):
     url = f"https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?host_mid={uid}"
-    cookie = get_bilibili_cookie()
-    
-    # Debug logging for cookie status
-    if not cookie:
-        logger.warning(f"Bilibili Cookie未加载! UID: {uid}")
-    else:
-        logger.info(f"Bilibili Cookie已加载 (长度: {len(cookie)}) UID: {uid}")
-
     headers = {
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -79,35 +84,19 @@ def get_user_dynamics(uid):
         "Origin": "https://space.bilibili.com",
         "Connection": "keep-alive",
     }
-    
-    if cookie:
-        headers["Cookie"] = cookie.strip()
+    if COOKIE:
+        headers["Cookie"] = COOKIE
 
-    try:
-        # Log actual request details for comparison with script
-        # logger.info(f"Preparing request for UID {uid}")
-        time.sleep(random.uniform(5, 10))
-        
-        response = requests.get(url, headers=headers, timeout=15)
-        
-        # Debug: Log what actually went out
-        # logger.info(f"Sent Headers: {response.request.headers}")
-        
-        # Check status code first
-        if response.status_code != 200:
-            logger.warning(f"Bilibili API Status Code: {response.status_code} (UID: {uid})")
-            # logger.warning(f"Sent Headers: {response.request.headers}")
-            
-        try:
-            data = response.json()
-        except json.JSONDecodeError:
-            logger.error(f"Bilibili Response is not JSON! Code: {response.status_code}")
-            logger.error(f"Response Preview: {response.text[:200]}")
-            return {"code": None, "message": f"Not JSON (Status: {response.status_code})", "data": None}
-            
-    except Exception as e:
-        return {"code": None, "message": str(e), "data": None}
-    return data
+    client = _http_client
+    if client is None:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(15.0)) as tmp_client:
+            response = await tmp_client.get(url, headers=headers)
+            response.raise_for_status()
+            return response.json()
+
+    response = await client.get(url, headers=headers)
+    response.raise_for_status()
+    return response.json()
 
 async def check_and_send_for_uid(uid, group_id):
     if not feature_manager.is_enabled(group_id, "bilibili动态转发"):
@@ -115,35 +104,27 @@ async def check_and_send_for_uid(uid, group_id):
 
     cache = load_cache(uid, group_id)
     logger.info(f"cache: {cache}")
-    data = get_user_dynamics(uid)
+    try:
+        data = await get_user_dynamics(uid)
+    except Exception as e:
+        logger.warning(f"B站API请求失败: {e} (UID: {uid})")
+        return
     bot = get_bot()
     
-    code = data.get("code")
-    message = data.get("message")
-
-    if code != 0:
-        logger.warning(f"B站API返回异常 code={code} message={message} (UID: {uid})")
-        if code == -352:
-            logger.error(f"⚠️ B站Cookie可能失效 (Code -352) - UID: {uid}")
-        if code == 403 or code == -403:
-            logger.error(f"⚠️ B站Cookie可能失效 (Code 403) - UID: {uid}")
+    # Error handling code remains the same
+    if data.get("code") == -352:
+        logger.warning(f"B站API请求失败: -352，可能Cookie失效，请更新cookie.txt文件 (UID: {uid})")
+        # Use logger.error to trigger global report instead of hardcoded ID
+        logger.error(f"⚠️ B站Cookie可能失效 (Code -352) - UID: {uid}")
+        return
+    if data.get("code") == 403 or data.get("code") == -403:
+        logger.warning(f"访问被拒绝，Cookie可能已过期或无效，请更新cookie.txt文件 (UID: {uid})")
+        logger.error(f"⚠️ B站Cookie可能失效 (Code 403) - UID: {uid}")
         return
 
-    data_obj = data.get("data")
-    items = None
-    if isinstance(data_obj, dict):
-        items = data_obj.get("items")
-        if items is None:
-            for k in ("list", "cards"):
-                if k in data_obj:
-                    items = data_obj.get(k)
-                    break
-
-    if not isinstance(items, list) or len(items) == 0:
-        data_keys = list(data_obj.keys()) if isinstance(data_obj, dict) else None
-        logger.warning(
-            f"未获取到动态内容 items为空或字段不存在 (UID: {uid}) code={code} message={message} data_keys={data_keys}"
-        )
+    items = data.get("data", {}).get("items", [])
+    if not items:
+        logger.warning(f"未获取到动态内容，data中无 items 字段 (UID: {uid})")
         return
 
     # 按时间排序items(假设id_str可以用于排序,因为B站动态ID是递增的)
@@ -347,6 +328,79 @@ async def check_and_send_for_uid(uid, group_id):
     if new_cache != cache:  # 只有当缓存发生变化时才保存
         save_cache(uid, group_id, new_cache[:100])
 
+# update_cookie = on_regex(r"^更新B站Cookie$", block=True)
+
+# @update_cookie.handle()
+# async def handle_update_cookie(bot: Bot, event: PrivateMessageEvent):
+#     try:
+#         qrcode_key, qrcode_url = get_qrcode()
+#         img = qrcode.make(qrcode_url)
+#         buf = BytesIO()
+#         img.save(buf, format='PNG')
+#         buf.seek(0)
+
+#         await update_cookie.send(MessageSegment.image(buf))
+#         time.sleep(30)
+#         login_url = poll_login(qrcode_key)
+#         logger.info(f"{qrcode_key}/n{qrcode_url}/n{login_url}")
+#         if login_url:
+#             cookies = get_cookies_from_url(login_url)
+#             cookie_str = save_cookie(cookies)
+#             await update_cookie.send("登录成功，cookie已保存。")
+#             await update_cookie.send(f"Cookie:{cookie_str}")
+#         else:
+#             await update_cookie.send("二维码过期或用户取消，登录失败。")
+#     except Exception as e:
+#         await update_cookie.send(f"发生错误: {str(e)}")
+
+# def get_qrcode():
+#     url = "https://passport.bilibili.com/x/passport-login/web/qrcode/generate"
+#     headers = {
+#         "User-Agent": "Mozilla/5.0"
+#     }
+#     resp = requests.get(url, headers=headers).json()
+#     qrcode_key = resp['data']['qrcode_key']
+#     qrcode_url = resp['data']['url']
+#     return qrcode_key, qrcode_url
+
+# def poll_login(qrcode_key):
+#     url = "https://passport.bilibili.com/x/passport-login/web/qrcode/poll"
+#     headers = {
+#         "User-Agent": "Mozilla/5.0",
+#         "Content-Type": "application/x-www-form-urlencoded"
+#     }
+#     data = {
+#         "qrcode_key": qrcode_key
+#     }
+#     for _ in range(60):
+#         resp = requests.post(url, headers=headers, data=data)
+#         if resp.status_code != 200:
+#             return None
+#         try:
+#             json_data = resp.json()
+#         except Exception:
+#             return None
+#         if json_data['data']['code'] == 0:
+#             return json_data['data']['url']
+#         elif json_data['data']['code'] == 86038:
+#             return None
+#         time.sleep(1)
+#     return None
+
+# def get_cookies_from_url(url):
+#     session = requests.Session()
+#     session.get(url)
+#     return session.cookies.get_dict()
+
+# def save_cookie(cookies):
+#     dedeuserid = cookies.get("DedeUserID", "")
+#     sessdata = cookies.get("SESSDATA", "")
+#     bili_jct = cookies.get("bili_jct", "")
+#     cookie_str = f"DedeUserID={dedeuserid};SESSDATA={sessdata};bili_jct={bili_jct}"
+#     with open(cookiePath, "w", encoding="utf-8") as f:
+#         json.dump({"cookie": cookie_str}, f, ensure_ascii=False, indent=4)
+#     return cookie_str
+
 EmergencyStop = on_regex(r"^B站动态紧急停止$", block=True)
 @EmergencyStop.handle()
 async def handle_emergency_stop(bot: Bot, event: PrivateMessageEvent):
@@ -396,18 +450,4 @@ async def bilibili_watch_job():
         # So we just iterate.
         for group_id in group_ids:
             await check_and_send_for_uid(uid, group_id)
-
-reload_cmd = on_command("bilibiliReload", aliases={"手动刷新B站"}, priority=5, block=True)
-
-@reload_cmd.handle()
-async def handle_reload(bot: Bot):
-    await reload_cmd.send("开始手动刷新B站动态...")
-    try:
-        await bilibili_watch_job()
-        await reload_cmd.finish("B站动态刷新完成。")
-    except FinishedException:
-        pass
-    except Exception as e:
-        logger.error(f"Manual reload failed: {e}")
-        await reload_cmd.finish(f"刷新失败: {e}")
 

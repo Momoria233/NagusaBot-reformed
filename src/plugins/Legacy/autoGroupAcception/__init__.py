@@ -124,6 +124,8 @@ async def handle_group_request(bot: Bot, event: GroupRequestEvent,block=False):
 private_msg = on_message(priority=1)
 @private_msg.handle()
 async def handle_private_msg(bot: Bot, event: PrivateMessageEvent):
+    if not isinstance(event, PrivateMessageEvent):
+        return
     if event.user_id != global_config.superuser_id:
         return
 

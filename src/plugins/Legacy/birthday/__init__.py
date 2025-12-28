@@ -28,25 +28,25 @@ SCHALE_DB_URL = "https://raw.githubusercontent.com/SchaleDB/SchaleDB/main/data/c
 data_dir = resource_manager.get_data_dir("birthday")
 data_path = data_dir / "students.json"
 
-async def update_config():
-    logger.info("Updating students data...")
-    try:
-        with ThreadPoolExecutor() as executor:
-            loop = asyncio.get_running_loop()
-            # Use global config proxy if needed, currently direct request
-            res = await loop.run_in_executor(executor, requests.get, SCHALE_DB_URL)
-        res.raise_for_status()
+# async def update_config():
+#     logger.info("Updating students data...")
+#     try:
+#         with ThreadPoolExecutor() as executor:
+#             loop = asyncio.get_running_loop()
+#             # Use global config proxy if needed, currently direct request
+#             res = await loop.run_in_executor(executor, requests.get, SCHALE_DB_URL)
+#         res.raise_for_status()
         
-        with open(data_path, "wb") as file:
-            file.write(res.content)
-        logger.info("Data Updated!")
-    except Exception as e:
-        logger.error(f"Data update failed: {e}")
-        if not data_path.exists():
-            logger.error("Cache not found, cannot proceed.")
-            return False
-        logger.warning("Using cached data.")
-    return True
+#         with open(data_path, "wb") as file:
+#             file.write(res.content)
+#         logger.info("Data Updated!")
+#     except Exception as e:
+#         logger.error(f"Data update failed: {e}")
+#         if not data_path.exists():
+#             logger.error("Cache not found, cannot proceed.")
+#             return False
+#         logger.warning("Using cached data.")
+#     return True
 
 tz = pytz.timezone("Asia/Shanghai")
 driver = get_driver()
@@ -56,7 +56,7 @@ logger.info(f"Current Start Date : {start_date.strftime('%a %b %d %Y %H:%M:%S GM
 
 @driver.on_startup
 async def init_func():
-    await update_config()
+    # await update_config()
     next_date: datetime = start_date + timedelta(days=1)
     logger.info(f"Next action will occur at {next_date.strftime('%a %b %d %Y %H:%M:%S GMT%z (%Z)')}")
 
@@ -110,10 +110,10 @@ async def report_birthday():
     logger.info(f"report_birthday started at: {now.strftime('%a %b %d %Y %H:%M:%S GMT%z (%Z)')}")
     logger.info(f"Next action will be starting in {next_date.strftime('%a %b %d %Y %H:%M:%S GMT%z (%Z)')}")
 
-    res = await update_config()
-    if not res:
-        logger.error("Skip this action due to data update failure")
-        return
+    # res = await update_config()
+    # if not res:
+    #     logger.error("Skip this action due to data update failure")
+    #     return
 
     with ThreadPoolExecutor() as executor:
         loop = asyncio.get_running_loop()
@@ -173,10 +173,10 @@ async def debug_command_handler(args: Message = CommandArg()):
             await debug_command.finish("格式错误，请输入 MM/DD")
             return
 
-        res = await update_config()
-        if not res:
-            await debug_command.finish("数据更新失败")
-            return
+        # res = await update_config()
+        # if not res:
+        #     await debug_command.finish("数据更新失败")
+        #     return
 
         with ThreadPoolExecutor() as executor:
             loop = asyncio.get_running_loop()

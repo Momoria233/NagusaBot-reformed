@@ -6,13 +6,15 @@
 __pycache__/
 *.py[cod]
 *$py.class
-cache
-logs
+cache/
+logs/
 .vscode
 src/plugins/RecallAd/assets/revoke_records.json
 src/plugins/llmPlugin/apikey.json
 src/plugins/NewReact/apikey.json
 src/plugins/bilibiliRepost/assets/cookie.json
+src/plugins/Reform/bilibili-repost/assets/cookie.json
+src/plugins/**/assets/cookie.json
 # C extensions
 *.so
 

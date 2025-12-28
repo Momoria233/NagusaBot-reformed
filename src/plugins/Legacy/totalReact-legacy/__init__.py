@@ -20,12 +20,12 @@ from src.common.resource import resource_manager
 
 # Register features
 feature_manager.register("哈气", ": \n哈气要交税！")
-feature_manager.register("我超 盒", ": \n或许是字面意思...?")
+feature_manager.register("我超盒", ": \n或许是字面意思...?")
 feature_manager.register("吃史", ": \n在群内发送 吃史 可以吃到一些奇怪的东西。")
 feature_manager.register("吃饭", ": \n随机吃点什么")
 feature_manager.register("投降", ": \n发送 投降")
 feature_manager.register("开票", ": \n蔚蓝档案总力战模拟")
-feature_manager.register("手气王", ": \n红包手气王嘲讽")
+# feature_manager.register("手气王", ": \n红包手气王嘲讽")
 feature_manager.register("拼好饭", ": \n模拟拼好饭")
 feature_manager.register("戳一戳", ": \n戳一戳机器人的反应")
 

@@ -1,3 +1,5 @@
+# DEPRECATED
+
 # priority count
 debug cmd priority - 1
 admin cmd priority - 3

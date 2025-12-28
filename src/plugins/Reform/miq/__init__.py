@@ -23,8 +23,10 @@ from .generator import draw_quote, draw_chat_log
 feature_manager.register("miq", ": \n引用消息生成图片。")
 
 
-miq_cmd = on_command("miq", rule=to_me(), priority=5, block=True)
-miqtest_cmd = on_command("miqtest", rule=to_me(), priority=5, block=True)
+# miq_cmd = on_command("miq", rule=to_me(), priority=5, block=True)
+miq_cmd = on_command("miq",rule=to_me())
+# miqtest_cmd = on_command("miqtest", rule=to_me(), priority=5, block=True)
+miqtest_cmd = on_command("miqtest",rule=to_me())
 
 message_history: Dict[int, List[Dict]] = {}
 
