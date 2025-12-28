@@ -1,4 +1,5 @@
 from io import BytesIO
+import os
 from typing import Tuple, List, Dict
 
 from PIL import Image, ImageDraw, ImageFont
@@ -6,6 +7,15 @@ from PIL import Image, ImageDraw, ImageFont
 
 def load_fonts() -> Tuple[ImageFont.FreeTypeFont, ImageFont.FreeTypeFont, ImageFont.FreeTypeFont]:
     candidates = ["msyh.ttc", "msyh.ttf", "simhei.ttf", "simsun.ttc"]
+    
+    # 优先尝试加载 assets 文件夹中的字体
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    assets_dir = os.path.join(current_dir, "assets")
+    if os.path.exists(assets_dir):
+        for file in os.listdir(assets_dir):
+            if file.lower().endswith((".ttf", ".ttc", ".otf")):
+                candidates.insert(0, os.path.join(assets_dir, file))
+
     for name in candidates:
         try:
             name_font = ImageFont.truetype(name, 32)
