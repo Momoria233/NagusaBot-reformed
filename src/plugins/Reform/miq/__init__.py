@@ -56,36 +56,36 @@ def encode_image_to_base64(img) -> str:
     return base64.b64encode(buf.getvalue()).decode()
 
 
-@record_msg.handle()
-async def record_group_message(event: GroupMessageEvent):
-    group_id = event.group_id
-    history = message_history.get(group_id)
-    if history is None:
-        history = []
-        message_history[group_id] = history
+# @record_msg.handle()
+# async def record_group_message(event: GroupMessageEvent):
+#     group_id = event.group_id
+#     history = message_history.get(group_id)
+#     if history is None:
+#         history = []
+#         message_history[group_id] = history
 
-    text_parts = []
-    for seg in event.message:
-        if seg.type == "text":
-            text_parts.append(seg.data.get("text", ""))
-    text = "".join(text_parts).strip()
-    if not text:
-        return
+#     text_parts = []
+#     for seg in event.message:
+#         if seg.type == "text":
+#             text_parts.append(seg.data.get("text", ""))
+#     text = "".join(text_parts).strip()
+#     if not text:
+#         return
 
-    sender = event.sender
-    nickname = sender.card or sender.nickname or str(event.user_id)
+#     sender = event.sender
+#     nickname = sender.card or sender.nickname or str(event.user_id)
 
-    history.append(
-        {
-            "message_id": event.message_id,
-            "user_id": event.user_id,
-            "nickname": nickname,
-            "text": text,
-            "time": event.time,
-        }
-    )
-    if len(history) > 200:
-        history.pop(0)
+#     history.append(
+#         {
+#             "message_id": event.message_id,
+#             "user_id": event.user_id,
+#             "nickname": nickname,
+#             "text": text,
+#             "time": event.time,
+#         }
+#     )
+#     if len(history) > 200:
+#         history.pop(0)
 
 
 @miq_cmd.handle()
