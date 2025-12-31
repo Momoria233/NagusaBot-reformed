@@ -91,11 +91,11 @@ class Config(BaseSettings):
     uni_recall_trusted_users: Set[int] = {2447209382, 2743654437}
 
     if SettingsConfigDict is not None:
-        model_config = SettingsConfigDict(extra="ignore", env_file=".env", env_file_encoding="utf-8")
+        model_config = SettingsConfigDict(extra="ignore", env_file=(".env.prod", ".env"), env_file_encoding="utf-8")
     else:
         class Config:
             extra = "ignore"
-            env_file = ".env"
+            env_file = (".env.prod", ".env")
             env_file_encoding = "utf-8"
 
     if IS_PYDANTIC_V2:
