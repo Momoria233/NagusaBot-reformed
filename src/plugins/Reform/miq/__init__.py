@@ -32,11 +32,12 @@ miqtest_cmd = on_command("miqtest",rule=to_me())
 
 message_history: Dict[int, List[Dict]] = {}
 
-record_msg = on_message(priority=90, block=False)
+record_msg = on_message()
 
 _AVATAR_FETCH_SEMAPHORE = asyncio.Semaphore(2)
 _DEFAULT_AVATAR_MD5S: Optional[set[str]] = None
 _DEFAULT_AVATAR_MD5S_LOCK = asyncio.Lock()
+_MAX_IMAGES = 9
 
 
 def _normalize_user_id(value: object) -> Optional[int]:
@@ -184,43 +185,54 @@ def encode_image_to_base64(img) -> str:
     return base64.b64encode(buf.getvalue()).decode()
 
 
-# @record_msg.handle()
-# async def record_group_message(event: GroupMessageEvent):
-#     group_id = event.group_id
-#     history = message_history.get(group_id)
-#     if history is None:
-#         history = []
-#         message_history[group_id] = history
-
-#     text_parts = []
-#     for seg in event.message:
-#         if seg.type == "text":
-#             text_parts.append(seg.data.get("text", ""))
-#     text = "".join(text_parts).strip()
-#     if not text:
-#         return
-
-#     sender = event.sender
-#     nickname = sender.card or sender.nickname or str(event.user_id)
-
-#     history.append(
-#         {
-#             "message_id": event.message_id,
-#             "user_id": event.user_id,
-#             "nickname": nickname,
-#             "text": text,
-#             "time": event.time,
-#         }
-#     )
-#     if len(history) > 200:
-#         history.pop(0)
+@record_msg.handle()
+async def record_group_message(event: GroupMessageEvent):
+    group_id = event.group_id
+    if not feature_manager.is_enabled(group_id, "miq"):
+        return
+    history = message_history.get(group_id)
+    if history is None:
+        history = []
+        message_history[group_id] = history
+    text_parts = []
+    images: List[str] = []
+    for seg in event.message:
+        if seg.type == "text":
+            text_parts.append(seg.data.get("text", ""))
+        elif seg.type == "image":
+            raw = seg.data.get("url") or seg.data.get("file") or ""
+            if isinstance(raw, str) and raw:
+                if raw.startswith("http") or raw.startswith("base64://"):
+                    if len(images) < _MAX_IMAGES:
+                        images.append(raw)
+        elif seg.type == "face":
+            text_parts.append("[表情]")
+        elif seg.type == "record":
+            text_parts.append("[语音]")
+        elif seg.type == "video":
+            text_parts.append("[视频]")
+    text = "".join(text_parts).strip()
+    if not text and not images:
+        return
+    sender = event.sender
+    nickname = sender.card or sender.nickname or str(event.user_id)
+    history.append(
+        {
+            "message_id": event.message_id,
+            "user_id": event.user_id,
+            "nickname": nickname,
+            "text": text,
+            "time": event.time,
+            "images": images,
+        }
+    )
+    if len(history) > 200:
+        history.pop(0)
 
 
 @miq_cmd.handle()
 async def handle_miq(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     reply = getattr(event, "reply", None)
-    if reply is None:
-        await miq_cmd.finish("请先回复需要生成图片的消息，然后再发送 /miq。")
 
     group_name = None
     group_id = None
@@ -251,6 +263,81 @@ async def handle_miq(bot: Bot, event: MessageEvent, args: Message = CommandArg()
             data = await get_avatar_bytes(uid, bot=bot, client=client, default_md5s=default_md5s)
             avatar_mem[uid] = data
             return data
+        async def fetch_image_bytes_from_url(url: str) -> Optional[bytes]:
+            try:
+                resp = await client.get(url)
+                resp.raise_for_status()
+                return resp.content
+            except Exception:
+                return None
+        def extract_image_metas_from_segments(segments) -> List[str]:
+            metas: List[str] = []
+            for seg in segments:
+                t = getattr(seg, "type", None) if not isinstance(seg, dict) else seg.get("type")
+                d = getattr(seg, "data", None) if not isinstance(seg, dict) else seg.get("data")
+                if isinstance(d, dict) and t == "image":
+                    raw = d.get("url") or d.get("file") or ""
+                    if isinstance(raw, str) and raw and (raw.startswith("http") or raw.startswith("base64://")):
+                        if len(metas) < _MAX_IMAGES:
+                            metas.append(raw)
+            return metas
+        async def resolve_images_from_metas(metas: List[str]) -> List[bytes]:
+            out: List[bytes] = []
+            for m in metas[:_MAX_IMAGES]:
+                if m.startswith("base64://"):
+                    try:
+                        out.append(base64.b64decode(m[len("base64://"):]))
+                    except Exception:
+                        continue
+                elif m.startswith("http"):
+                    b = await fetch_image_bytes_from_url(m)
+                    if b:
+                        out.append(b)
+            return out
+        async def collect_image_bytes_from_segments(segments) -> List[bytes]:
+            metas = extract_image_metas_from_segments(segments)
+            return await resolve_images_from_metas(metas)
+        arg_text = args.extract_plain_text().strip()
+        count = None
+        if arg_text.isdigit():
+            count = int(arg_text)
+            if count < 1:
+                count = 1
+            if count > 20:
+                count = 20
+        if reply is None:
+            if isinstance(event, GroupMessageEvent) and group_id is not None and isinstance(count, int):
+                history = message_history.get(group_id) or []
+                if not history:
+                    await miq_cmd.finish("暂无可用的消息记录。")
+                selected = history[-count:] if count <= len(history) else history
+                records: List[Dict[str, str]] = []
+                for item in selected:
+                    user_id = item["user_id"]
+                    nickname = item["nickname"]
+                    text = item["text"]
+                    dt = datetime.fromtimestamp(item["time"])
+                    time_str = dt.strftime("%Y-%m-%d %H:%M")
+                    imgs_bytes = await resolve_images_from_metas([x for x in item.get("images", []) if isinstance(x, str)])
+                    try:
+                        avatar_bytes = await avatar_for(user_id)
+                    except Exception:
+                        avatar_bytes = build_placeholder_avatar()
+                    records.append(
+                        {
+                            "avatar_bytes": avatar_bytes,
+                            "nickname": nickname,
+                            "text": text,
+                            "time_str": time_str,
+                            "images": imgs_bytes,
+                        }
+                    )
+                if records:
+                    img = draw_chat_log(records, group_name=group_name)
+                    img_b64 = encode_image_to_base64(img)
+                    cq = f"[CQ:image,file=base64://{img_b64}]"
+                    await miq_cmd.finish(Message(cq))
+            await miq_cmd.finish("请回复消息或使用 /miq 数字。")
 
         forward_id = None
         for seg in reply.message:
@@ -311,9 +398,22 @@ async def handle_miq(bot: Bot, event: MessageEvent, args: Message = CommandArg()
                             user_id = resolved
                     content = node.get("content") or node.get("message") or []
                     text_parts = []
+                    image_metas: List[str] = []
                     for seg in content:
                         if seg.get("type") == "text":
                             text_parts.append(seg.get("data", {}).get("text", ""))
+                        elif seg.get("type") == "image":
+                            data = seg.get("data", {}) or {}
+                            raw = data.get("url") or data.get("file") or ""
+                            if isinstance(raw, str) and raw and (raw.startswith("http") or raw.startswith("base64://")):
+                                if len(image_metas) < _MAX_IMAGES:
+                                    image_metas.append(raw)
+                        elif seg.get("type") == "face":
+                            text_parts.append("[表情]")
+                        elif seg.get("type") == "record":
+                            text_parts.append("[语音]")
+                        elif seg.get("type") == "video":
+                            text_parts.append("[视频]")
                     text = "".join(text_parts).strip()
                     if not text:
                         text = "[非文本消息]"
@@ -323,6 +423,7 @@ async def handle_miq(bot: Bot, event: MessageEvent, args: Message = CommandArg()
                     else:
                         dt = datetime.now()
                     time_str = dt.strftime("%Y-%m-%d %H:%M")
+                    imgs_bytes = await resolve_images_from_metas(image_metas)
                     try:
                         if user_id is not None:
                             avatar_bytes = await avatar_for(user_id)
@@ -336,6 +437,7 @@ async def handle_miq(bot: Bot, event: MessageEvent, args: Message = CommandArg()
                             "nickname": nickname,
                             "text": text,
                             "time_str": time_str,
+                            "images": imgs_bytes,
                         }
                     )
                 if records:
@@ -371,6 +473,7 @@ async def handle_miq(bot: Bot, event: MessageEvent, args: Message = CommandArg()
                     text = item["text"]
                     dt = datetime.fromtimestamp(item["time"])
                     time_str = dt.strftime("%Y-%m-%d %H:%M")
+                    imgs_bytes = await resolve_images_from_metas([x for x in item.get("images", []) if isinstance(x, str)])
                     try:
                         avatar_bytes = await avatar_for(user_id)
                     except Exception:
@@ -381,6 +484,7 @@ async def handle_miq(bot: Bot, event: MessageEvent, args: Message = CommandArg()
                             "nickname": nickname,
                             "text": text,
                             "time_str": time_str,
+                            "images": imgs_bytes,
                         }
                     )
                 if records:
@@ -398,9 +502,17 @@ async def handle_miq(bot: Bot, event: MessageEvent, args: Message = CommandArg()
         for seg in reply.message:
             if seg.type == "text":
                 text_parts.append(seg.data.get("text", ""))
+            elif seg.type == "face":
+                text_parts.append("[表情]")
+            elif seg.type == "record":
+                text_parts.append("[语音]")
+            elif seg.type == "video":
+                text_parts.append("[视频]")
         text = "".join(text_parts).strip()
         if not text:
-            text = "[该消息不包含纯文本内容]"
+            # text = "[该消息不包含纯文本内容]"
+            text = ""
+        reply_imgs = await collect_image_bytes_from_segments(reply.message)
 
         msg_detail = await bot.get_msg(message_id=reply.message_id)
         msg_sender = msg_detail.get("sender") or {}
@@ -428,6 +540,7 @@ async def handle_miq(bot: Bot, event: MessageEvent, args: Message = CommandArg()
             text=text,
             time_str=time_str,
             group_name=group_name,
+            images=reply_imgs,
         )
         img_b64 = encode_image_to_base64(img)
         cq = f"[CQ:image,file=base64://{img_b64}]"

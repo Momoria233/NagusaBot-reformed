@@ -1,6 +1,6 @@
 from io import BytesIO
 import os
-from typing import Tuple, List, Dict
+from typing import Tuple, List, Dict, Optional
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -56,6 +56,7 @@ def draw_quote(
     time_str: str,
     group_name: str | None = None,
     width: int = 800,
+    images: Optional[List[bytes]] = None,
 ) -> Image.Image:
     avatar = Image.open(BytesIO(avatar_bytes)).convert("RGBA")
     avatar_size = 96
@@ -96,7 +97,35 @@ def draw_quote(
     bbox = temp_draw.multiline_textbbox((0, 0), wrapped_text, font=font_text, spacing=4)
     text_height = bbox[3] - bbox[1]
 
-    card_height = max(card_height_min, 40 + avatar_size + text_height)
+    thumbs: List[Image.Image] = []
+    if images:
+        for b in images[:9]:
+            try:
+                im = Image.open(BytesIO(b)).convert("RGBA")
+            except Exception:
+                continue
+            im.thumbnail((240, 240))
+            thumbs.append(im)
+    cols = 3 if thumbs else 0
+    spacing = 12
+    thumb_w = 0
+    thumb_h = 0
+    rows = 0
+    if cols:
+        thumb_w = int((max_text_width - (cols - 1) * spacing) / cols)
+        thumb_h = thumb_w
+        for i in range(len(thumbs)):
+            thumbs[i] = thumbs[i].resize((thumb_w, min(thumb_h, max(1, int(thumbs[i].height * thumb_w / max(thumbs[i].width, 1))))))
+        rows = (len(thumbs) + cols - 1) // cols
+    images_height = 0
+    if rows:
+        heights = []
+        for r in range(rows):
+            row_imgs = thumbs[r * cols : (r + 1) * cols]
+            if row_imgs:
+                heights.append(max(im.height for im in row_imgs))
+        images_height = sum(heights) + spacing * (rows - 1) + (16 if text_height > 0 else 0)
+    card_height = max(card_height_min, 40 + avatar_size + text_height + images_height)
     img_height = max(img_height_min, card_height + 80)
     card_y1 = card_y0 + card_height
 
@@ -130,6 +159,23 @@ def draw_quote(
         fill=text_color,
         spacing=5,
     )
+    if thumbs:
+        y_images = text_y + text_height + (16 if text_height > 0 else 0)
+        cx = text_x
+        rx = cx
+        ry = y_images
+        row_max_h = 0
+        for i, im in enumerate(thumbs):
+            draw_w = im.width
+            draw_h = im.height
+            img.paste(im, (rx, ry), im)
+            row_max_h = max(row_max_h, draw_h)
+            if (i + 1) % cols == 0:
+                rx = cx
+                ry += row_max_h + spacing
+                row_max_h = 0
+            else:
+                rx += draw_w + spacing
 
     bbox_time = font_time.getbbox(time_str)
     time_w = bbox_time[2] - bbox_time[0]
@@ -186,7 +232,34 @@ def draw_chat_log(
         time_bbox = font_time.getbbox(rec["time_str"])
         time_height = time_bbox[3] - time_bbox[1]
 
-        content_height = 16 + 45 + text_height + 20 + time_height + 20
+        thumbs: List[Image.Image] = []
+        imgs = rec.get("images") or []
+        if imgs:
+            for b in imgs[:9]:
+                try:
+                    im = Image.open(BytesIO(b)).convert("RGBA")
+                except Exception:
+                    continue
+                im.thumbnail((220, 220))
+                thumbs.append(im)
+        cols = 3 if thumbs else 0
+        spacing_i = 10
+        thumb_w = 0
+        rows = 0
+        images_height = 0
+        if cols:
+            thumb_w = int((max_text_width - (cols - 1) * spacing_i) / cols)
+            for i in range(len(thumbs)):
+                thumbs[i] = thumbs[i].resize((thumb_w, min(thumb_w, max(1, int(thumbs[i].height * thumb_w / max(thumbs[i].width, 1))))))
+            rows = (len(thumbs) + cols - 1) // cols
+            heights = []
+            for r in range(rows):
+                row_imgs = thumbs[r * cols : (r + 1) * cols]
+                if row_imgs:
+                    heights.append(max(im.height for im in row_imgs))
+            images_height = sum(heights) + spacing_i * (rows - 1) + (12 if text_height > 0 else 0)
+
+        content_height = 16 + 45 + text_height + images_height + 20 + time_height + 20
         block_height = max(avatar_size + 32, content_height)
 
         blocks.append(
@@ -197,6 +270,10 @@ def draw_chat_log(
                 "text_height": text_height,
                 "time_str": rec["time_str"],
                 "height": block_height,
+                "thumbs": thumbs,
+                "cols": cols,
+                "spacing_i": spacing_i,
+                "text_x": text_x,
             }
         )
         total_height += block_height + block_spacing
@@ -242,6 +319,20 @@ def draw_chat_log(
             fill=text_color,
             spacing=5,
         )
+        if block["thumbs"]:
+            cx = block["text_x"]
+            rx = cx
+            ry = text_y + block["text_height"] + (12 if block["text_height"] > 0 else 0)
+            row_max_h = 0
+            for i, im in enumerate(block["thumbs"]):
+                img.paste(im, (rx, ry), im)
+                row_max_h = max(row_max_h, im.height)
+                if (i + 1) % block["cols"] == 0:
+                    rx = cx
+                    ry += row_max_h + block["spacing_i"]
+                    row_max_h = 0
+                else:
+                    rx += im.width + block["spacing_i"]
 
         time_str = block["time_str"]
         tb = font_time.getbbox(time_str)
