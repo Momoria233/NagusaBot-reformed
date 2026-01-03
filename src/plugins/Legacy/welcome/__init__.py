@@ -38,6 +38,14 @@ def load_config():
             with open(config_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 welcome_config = {int(k): v for k, v in data.items()}
+            # Merge legacy defaults for any missing groups
+            merged = False
+            for gid, msg in Config.welcome_message.items():
+                if gid not in welcome_config:
+                    welcome_config[gid] = msg
+                    merged = True
+            if merged:
+                save_config()
         except Exception as e:
             logger.error(f"Failed to load welcome config: {e}")
             welcome_config = {}

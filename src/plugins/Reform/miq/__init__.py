@@ -26,7 +26,7 @@ feature_manager.register("miq", ": \n引用消息生成图片。")
 
 
 # miq_cmd = on_command("miq", rule=to_me(), priority=5, block=True)
-miq_cmd = on_command("miq",rule=to_me())
+miq_cmd = on_command("miq",aliases={"语录"},rule=to_me())
 # miqtest_cmd = on_command("miqtest", rule=to_me(), priority=5, block=True)
 miqtest_cmd = on_command("miqtest",rule=to_me())
 
