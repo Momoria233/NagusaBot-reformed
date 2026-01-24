@@ -5,13 +5,15 @@ import pytz
 import os
 from pathlib import Path
 
+from typing import Union
 from nonebot import logger, on_notice, on_command
 from nonebot.adapters.onebot.v11 import (
     Bot,
     GroupIncreaseNoticeEvent,
     Message,
     MessageSegment,
-    GroupMessageEvent
+    GroupMessageEvent,
+    PrivateMessageEvent
 )
 from nonebot.permission import SUPERUSER
 from nonebot.adapters.onebot.v11.permission import GROUP_ADMIN, GROUP_OWNER
@@ -125,11 +127,30 @@ async def welcoming(bot: Bot, event: GroupIncreaseNoticeEvent, state: T_State):
 set_welcome_cmd = on_command("set_welcome", aliases={"设置欢迎语"}, permission=SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
 
 @set_welcome_cmd.handle()
-async def set_welcome_handle(bot: Bot, event: GroupMessageEvent, args: Message = CommandArg()):
-    msg = args.extract_plain_text().strip()
-    if not msg:
-        await set_welcome_cmd.finish("请提供欢迎语内容。支持占位符：{at}, {img:文件名}, {countdown:YYYY-MM-DD}")
+async def set_welcome_handle(bot: Bot, event: Union[GroupMessageEvent, PrivateMessageEvent], args: Message = CommandArg()):
+    raw_args = args.extract_plain_text().strip()
     
-    welcome_config[event.group_id] = msg
+    target_group_id = None
+    welcome_msg = None
+
+    if isinstance(event, GroupMessageEvent):
+        target_group_id = event.group_id
+        welcome_msg = raw_args
+        if not welcome_msg:
+             await set_welcome_cmd.finish("请提供欢迎语内容。支持占位符：{at}, {img:文件名}, {countdown:YYYY-MM-DD}")
+    else:
+        # Private Message
+        parts = raw_args.split(maxsplit=1)
+        if len(parts) < 2:
+             await set_welcome_cmd.finish("私聊设置请使用格式：/set_welcome <群号> <内容>")
+        
+        gid_str, content = parts
+        if not gid_str.isdigit():
+             await set_welcome_cmd.finish("群号必须是数字。")
+        
+        target_group_id = int(gid_str)
+        welcome_msg = content
+
+    welcome_config[target_group_id] = welcome_msg
     save_config()
-    await set_welcome_cmd.finish("当前群欢迎语已更新。")
+    await set_welcome_cmd.finish(f"群 {target_group_id} 欢迎语已更新为：\n{welcome_msg}")

@@ -66,7 +66,7 @@ class Config(BaseSettings):
     
     # Database
     db_url_dev: str = "sqlite://db.sqlite3"
-    db_url_prod: str = "postgresql+asyncpg://user:pass@localhost:5432/nagusabot"
+    db_url_prod: str = "sqlite://db.sqlite3"
     
     # Third Party Keys (Load from .env)
     bilibili_cookie: Optional[str] = Field(None, env="BILIBILI_COOKIE")
