@@ -220,3 +220,15 @@ async def baijianL(bot: Bot, event: GroupMessageEvent, state: T_State):
         await baijian.finish(message=Message([at," 拜见岁大王！"]))
     else:
         await baijian.finish()
+
+baijian  = on_regex(pattern=r"雪诺驾到$")
+@baijian.handle()
+async def baijianL(bot: Bot, event: GroupMessageEvent, state: T_State):
+    if event.group_id != 1077304925:
+        return
+    user_id = event.get_user_id()
+    at = MessageSegment.at(user_id)
+    if user_id == "3291407469":
+        await baijian.finish(message=Message([at," 雪诺大小姐好！"]))
+    else:
+        await baijian.finish()
