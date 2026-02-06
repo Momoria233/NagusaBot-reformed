@@ -16,18 +16,22 @@ feature_manager.register("自动入群申请", ": 对新的入群申请进行正
 feature_manager.register("强制人工审核", ": 开启后，该群的所有入群申请都将转为人工审核，忽略自动匹配规则。")
 
 # Load assets
-assets_dir = resource_manager.get_bundled_asset_dir(__file__)
-replacement_file = assets_dir / "replacement.json"
+# assets_dir = resource_manager.get_bundled_asset_dir(__file__)
+# assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
+# replacement_file = assets_dir / "replacement.json"
 
-checkData = []
-if replacement_file.exists():
-    try:
-        with open(replacement_file, 'r', encoding='utf-8') as f:
+# checkData = []
+# if replacement_file.exists():
+#     try:
+#         with open(replacement_file, 'r', encoding='utf-8') as f:
+#             checkData = json.load(f)
+#     except Exception as e:
+#         logger.error(f"Failed to load replacement.json: {e}")
+# else:
+#     logger.warning(f"replacement.json not found at {replacement_file}")
+assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
+with open(os.path.join(assets_dir,"replacement.json"), 'r', encoding='utf-8') as f:
             checkData = json.load(f)
-    except Exception as e:
-        logger.error(f"Failed to load replacement.json: {e}")
-else:
-    logger.warning(f"replacement.json not found at {replacement_file}")
 
 # Global pending requests storage
 pending_requests = {}
@@ -91,16 +95,33 @@ GroupRequest = on_request(priority=1)
 @GroupRequest.handle()
 async def handle_group_request(bot: Bot, event: GroupRequestEvent,block=False):
     logger.info(f"Group {event.group_id} request from {event.user_id}")
+    answer = event.comment.split("答案：", 1)[1] if "答案：" in event.comment else event.comment
     
-    if not feature_manager.is_enabled(event.group_id, "自动入群申请"):
-        logger.info(f"Group {event.group_id} feature '自动入群申请' disabled")
-        # If feature is disabled, ignore the request (let other plugins handle or default behavior)
-        # Usually finish() means "stop processing", but here we might want to just return 
-        # to let NoneBot continue? No, finish() stops this matcher.
-        await GroupRequest.finish()
+    # if not feature_manager.is_enabled(event.group_id, "自动入群申请"):
+    #     logger.info(f"Group {event.group_id} feature '自动入群申请' disabled")
+    #     # If feature is disabled, ignore the request (let other plugins handle or default behavior)
+    #     # Usually finish() means "stop processing", but here we might want to just return 
+    #     # to let NoneBot continue? No, finish() stops this matcher.
+    #     await GroupRequest.finish()
+    if event.group_id == 996101999:
+        if check_stu_name(answer):
+            await event.approve(bot)
+            msg = f"Group {event.group_id} request from {event.user_id} approved (Auto matched)"
+            logger.info(msg)
+            await bot.send_private_msg(user_id=global_config.superuser_id, message=msg)
+            await GroupRequest.finish()
+    if event.group_id == 1081871797:
+    # if event.group_id == 225173408:
+        logger.info("debug special request")
+        if ("日富美" in answer or "hifumi" in answer) and ("koharu" in answer or "小春" in answer):
+            await event.approve(bot)
+            msg = f"Group {event.group_id} request from {event.user_id} approved (Auto matched)"
+            logger.info(msg)
+            await bot.send_private_msg(user_id=global_config.superuser_id, message=msg)
+            await GroupRequest.finish()
+
 
     logger.info(event.comment)
-    answer = event.comment.split("答案：", 1)[1] if "答案：" in event.comment else event.comment
     logger.info(f"Extracted answer: {answer}")
 
     # Check for forced manual approve

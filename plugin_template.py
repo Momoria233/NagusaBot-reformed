@@ -5,6 +5,7 @@ NagusaBot Plugin Template
 
 import os
 from pathlib import Path
+from typing import Optional
 
 # NoneBot 基础组件
 from nonebot import on_command, on_message, on_notice, logger
@@ -24,6 +25,7 @@ from nonebot.typing import T_State
 from src.common.feature_manager import feature_manager  # 功能开关管理器
 from src.common.resource import resource_manager      # 资源与数据路径管理器
 from src.common.config import global_config           # 全局配置
+from src.common.config_manager import config_manager, PluginConfig, AssetRef
 
 # ==================================================================================
 # 1. 注册功能开关
@@ -31,6 +33,15 @@ from src.common.config import global_config           # 全局配置
 # 第一个参数是功能名称（用于管理员开关），第二个参数是功能描述（用于 /help 显示）
 PLUGIN_NAME = "新功能示例"
 feature_manager.register(PLUGIN_NAME, ": \n这是一个新功能的示例描述，将在帮助菜单中显示。")
+
+
+class ExampleConfig(PluginConfig):
+    enabled: bool = True
+    welcome_text: str = "Welcome!"
+    welcome_image: Optional[AssetRef] = None
+
+
+config_manager.register(PLUGIN_NAME, ExampleConfig)
 
 
 # ==================================================================================
@@ -63,6 +74,12 @@ async def handle_hello(bot: Bot, event: Event, args: Message = CommandArg()):
             await hello_cmd.finish()
             return
 
+    group_id = event.group_id if isinstance(event, GroupMessageEvent) else 0
+    cfg = config_manager.get(PLUGIN_NAME, group_id)
+    if isinstance(event, GroupMessageEvent) and not cfg.values.enabled:
+        await hello_cmd.finish()
+        return
+
     # 3.2 获取参数
     msg = args.extract_plain_text().strip()
     
@@ -76,5 +93,10 @@ async def handle_hello(bot: Bot, event: Event, args: Message = CommandArg()):
     
     # 3.5 发送回复
     user_id = event.get_user_id()
-    await hello_cmd.finish(f"你好！你的ID是 {user_id}。你发送了：{msg}")
+    text = cfg.values.welcome_text or f"你好！你的ID是 {user_id}。你发送了：{msg}"
+    image_path = cfg.assets.get("welcome_image")
+    if image_path:
+        await hello_cmd.finish(Message([MessageSegment.text(text), MessageSegment.image(image_path)]))
+        return
+    await hello_cmd.finish(text)
 
