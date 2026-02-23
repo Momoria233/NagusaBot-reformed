@@ -234,3 +234,12 @@ async def jdL(bot: Bot, event: GroupMessageEvent, state: T_State):
         await jd.finish(message=Message([at," 雪诺大小姐好！"]))
     else:
         await jd.finish()
+
+liuerling  = on_regex(pattern=r"^620$")
+@liuerling.handle()
+async def liuerlingL(bot: Bot, event: GroupMessageEvent, state: T_State):
+    if event.group_id != 996101999:
+        return
+    user_id = event.get_user_id()
+    at = MessageSegment.at(user_id)
+    await liuerling.finish(message=Message([at," 所以620是什么意思？？难道是指一个叫特儿的扫群友于2026年1月23日在宜必思酒店 (天津火车站津湾广场店)六楼找不到620在哪，于是在北京bao群问620在哪吗？"]))

@@ -11,5 +11,5 @@ adapters = [
     { name = "QQ", module_name = "nonebot.adapters.qq" }
 ]
 plugins = []
-plugin_dirs = ["src/plugins/dev-test","src/plugins/Admin"]
+plugin_dirs = ["src/plugins/Legacy","src/plugins/Reform"]
 builtin_plugins = ["echo"]
