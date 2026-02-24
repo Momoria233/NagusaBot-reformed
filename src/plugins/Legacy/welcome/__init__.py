@@ -1,8 +1,6 @@
 import re
-import json
 from datetime import datetime
 import pytz
-import os
 from pathlib import Path
 
 from typing import Union
@@ -21,64 +19,76 @@ from nonebot.params import CommandArg
 from nonebot.typing import T_State
 
 from .config import Config
-from src.common.feature_manager import feature_manager
-from src.common.resource import resource_manager
+from src.common.permission_manager import FeatureSpec, permission_manager
+from src.common.plugin_config import (
+    get_assets_dir,
+    get_group_assets_dir,
+    get_group_config,
+    resolve_asset_value_with_priority,
+    update_group_config,
+)
 
-# 注册功能
-feature_manager.register("入群欢迎", ": \n新人入群自动欢迎，如果需要更改自动欢迎的内容请使用 /set_welcome 指令。")
+PLUGIN_REG_NAME = "legacy-welcome"
+PLUGIN_REAL_NAME = "入群欢迎"
+FEATURE_WELCOME = "welcome"
 
-assets_dir = resource_manager.get_bundled_asset_dir(__file__)
-data_dir = resource_manager.get_data_dir("welcome")
-config_file = data_dir / "config.json"
+permission_manager.register(
+    PLUGIN_REG_NAME,
+    PLUGIN_REAL_NAME,
+    features=[FeatureSpec(name=FEATURE_WELCOME, default_open=True, description="入群欢迎")],
+    group_customize=True,
+)
 
-welcome_config = {}
+assets_dir = get_assets_dir(__file__)
+default_config_path = Path(__file__).parent / "config.py"
 
-def load_config():
-    global welcome_config
-    if config_file.exists():
+
+def _seed_legacy_defaults():
+    for gid, msg in Config.welcome_message.items():
         try:
-            with open(config_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                welcome_config = {int(k): v for k, v in data.items()}
-            # Merge legacy defaults for any missing groups
-            merged = False
-            for gid, msg in Config.welcome_message.items():
-                if gid not in welcome_config:
-                    welcome_config[gid] = msg
-                    merged = True
-            if merged:
-                save_config()
+            current = get_group_config(
+                PLUGIN_REG_NAME,
+                gid,
+                default_config_path,
+                allow_group_customize=True,
+            )
+            if current.get("welcome_message"):
+                continue
+            update_group_config(
+                PLUGIN_REG_NAME,
+                gid,
+                {"welcome_message": msg},
+                default_config_path,
+                allow_group_customize=True,
+            )
         except Exception as e:
-            logger.error(f"Failed to load welcome config: {e}")
-            welcome_config = {}
-    else:
-        logger.info("Welcome config not found, migrating from legacy Config...")
-        welcome_config = Config.welcome_message.copy()
-        save_config()
+            logger.error(f"Failed to seed welcome config for {gid}: {e}")
 
-def save_config():
-    try:
-        with open(config_file, "w", encoding="utf-8") as f:
-            json.dump(welcome_config, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        logger.error(f"Failed to save welcome config: {e}")
 
-load_config()
+_seed_legacy_defaults()
 
 NewWelcome = on_notice()
 
 @NewWelcome.handle()
 async def welcoming(bot: Bot, event: GroupIncreaseNoticeEvent, state: T_State):
-    if not feature_manager.is_enabled(event.group_id, "入群欢迎"):
+    if not permission_manager.is_enabled(
+        PLUGIN_REG_NAME, FEATURE_WELCOME, event.group_id, event.user_id
+    ):
         await NewWelcome.finish()
     
     group_id = event.group_id
-    if group_id not in welcome_config:
-        # No welcome message set for this group
+    config = get_group_config(
+        PLUGIN_REG_NAME,
+        group_id,
+        default_config_path,
+        allow_group_customize=True,
+    )
+    raw_message = config.get("welcome_message")
+    if not raw_message:
         return
 
     logger.info(f"match group id {group_id}")
-    raw_message = welcome_config[group_id]
+    group_assets_dir = get_group_assets_dir(PLUGIN_REG_NAME, group_id, create=True)
     
     parts = re.split(r"\{([^}]+)\}", raw_message)
     message_list: list[MessageSegment] = []
@@ -93,17 +103,21 @@ async def welcoming(bot: Bot, event: GroupIncreaseNoticeEvent, state: T_State):
                     message_list.append(MessageSegment.at(event.get_user_id()))
                 case str() as string if re.match(r"img:(.*)", string):
                     img_name = re.match(r"img:(.*)", string).group(1)
-                    img_path = assets_dir / img_name
+                    img_path = resolve_asset_value_with_priority(
+                        img_name, assets_dir, group_assets_dir
+                    )
                     logger.info(f"Loading image: {img_path}")
-                    if img_path.exists():
+                    if img_path is not None:
                         message_list.append(MessageSegment.image(img_path))
                     else:
                         logger.warning(f"Image not found: {img_path}")
                         message_list.append(MessageSegment.text(f"[图片缺失: {img_name}]"))
                 case str() as string if re.match(r"file:(.*)", string):
                     file_name = re.match(r"file:(.*)", string).group(1)
-                    file_path = assets_dir / file_name
-                    if file_path.exists():
+                    file_path = resolve_asset_value_with_priority(
+                        file_name, assets_dir, group_assets_dir
+                    )
+                    if file_path is not None:
                         message_list.append(MessageSegment.file(file_path))
                 case str() as string if re.match(r"countdown:(.*)", string):
                     target_date_str = re.match(r"countdown:(.*)", string).group(1).strip()
@@ -151,6 +165,12 @@ async def set_welcome_handle(bot: Bot, event: Union[GroupMessageEvent, PrivateMe
         target_group_id = int(gid_str)
         welcome_msg = content
 
-    welcome_config[target_group_id] = welcome_msg
-    save_config()
+    get_group_assets_dir(PLUGIN_REG_NAME, target_group_id, create=True)
+    update_group_config(
+        PLUGIN_REG_NAME,
+        target_group_id,
+        {"welcome_message": welcome_msg},
+        default_config_path,
+        allow_group_customize=True,
+    )
     await set_welcome_cmd.finish(f"群 {target_group_id} 欢迎语已更新为：\n{welcome_msg}")

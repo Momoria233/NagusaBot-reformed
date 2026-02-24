@@ -14,23 +14,32 @@ from nonebot.adapters.onebot.v11 import (
 )
 from .config import Config
 from nonebot.typing import T_State
-from src.common.feature_manager import feature_manager
+from src.common.permission_manager import FeatureSpec, permission_manager
 from src.common.config import global_config
-from src.common.resource import resource_manager
+from src.common.plugin_config import get_assets_dir
 
-# Register features
-feature_manager.register("哈气", ": \n哈气要交税！")
-feature_manager.register("我超盒", ": \n或许是字面意思...?")
-feature_manager.register("吃史", ": \n在群内发送 吃史 可以吃到一些奇怪的东西。")
-feature_manager.register("吃饭", ": \n随机吃点什么")
-feature_manager.register("投降", ": \n发送 投降")
-feature_manager.register("开票", ": \n蔚蓝档案总力战模拟")
-# feature_manager.register("手气王", ": \n红包手气王嘲讽")
-feature_manager.register("拼好饭", ": \n模拟拼好饭")
-feature_manager.register("戳一戳", ": \n戳一戳机器人的反应")
+PLUGIN_REG_NAME = "totalReact-legacy"
+PLUGIN_REAL_NAME = ""
+FEATURE_WAVE = "挥爪"
+# FEATURE_HE = "我超 盒"
+FEATURE_PINHAOFAN = "吃饭/拼好饭"
+FEATURE_POKE = "戳一戳"
+FEATURE_KAIPIAO = "开票"
 
-# Get assets directory (Plugin-bundled assets)
-assets_dir = resource_manager.get_bundled_asset_dir(__file__)
+permission_manager.register(
+    PLUGIN_REG_NAME,
+    PLUGIN_REAL_NAME,
+    features=[
+        FeatureSpec(name=FEATURE_WAVE, default_open=True, description="发送“挥爪”可以得到可爱学生挥爪表情包！"),
+        # FeatureSpec(name=FEATURE_HE, default_open=True, description="或许是字面意思...?"),
+        FeatureSpec(name=FEATURE_PINHAOFAN, default_open=True, description="在群里直接发送吃饭/拼好饭可以吃到/拼到一些奇怪的东西"),
+        FeatureSpec(name=FEATURE_POKE, default_open=True, description="戳一戳bot或许会得到一些意想不到的东西！"),
+        FeatureSpec(name=FEATURE_KAIPIAO, default_open=True, description="在群内发送 开票 可以模拟总力战，但是请小心炸票哦"),
+    ],
+    group_customize=True,
+)
+
+assets_dir = get_assets_dir(__file__)
 
 cooldown_tracker = {}
 
@@ -65,7 +74,7 @@ def emojiChoice(type_name):
 huizhua = on_regex(pattern = r"^挥爪$")
 @huizhua.handle()
 async def huizhuar(bot: Bot, event: GroupMessageEvent):
-    if not feature_manager.is_enabled(event.group_id, "哈气"):
+    if not permission_manager.is_enabled(PLUGIN_REG_NAME, FEATURE_WAVE, event.group_id, event.user_id):
         return
     gif_path = emojiChoice("wave")
     if not gif_path:
@@ -80,7 +89,9 @@ async def pokeReaction(bot: Bot, event: PokeNotifyEvent):
         await pokeReact.finish()
     
     # Check if enabled for this group (if it's a group event)
-    if event.group_id and not feature_manager.is_enabled(event.group_id, "戳一戳"):
+    if event.group_id and not permission_manager.is_enabled(
+        PLUGIN_REG_NAME, FEATURE_POKE, event.group_id, event.user_id
+    ):
          await pokeReact.finish()
 
     ret = random.randint(0,2)
@@ -102,40 +113,37 @@ async def pokeReaction(bot: Bot, event: PokeNotifyEvent):
 
 # 下为旧React部分
 
-he = on_regex(pattern=r"^我超.*盒$")
-@he.handle()
-async def he_handle(bot: Bot, event: GroupMessageEvent):
-    if not feature_manager.is_enabled(event.group_id, "我超 盒"):
-        return
-    at = MessageSegment.at(event.get_user_id())
-    if not usr_cd_check(event.get_user_id()):
-        await he.finish()
-    try:
-        await he.finish(message=Message([at,MessageSegment.record(file=assets_dir / "he.mp3")]))
-    except nonebot.exception.FinishedException:
-        pass
-    except Exception as e:
-        logger.error(e)
+# he = on_regex(pattern=r"^我超.*盒$")
+# @he.handle()
+# async def he_handle(bot: Bot, event: GroupMessageEvent):
+#     if not permission_manager.is_enabled(PLUGIN_REG_NAME, FEATURE_HE, event.group_id, event.user_id):
+#         return
+#     at = MessageSegment.at(event.get_user_id())
+#     if not usr_cd_check(event.get_user_id()):
+#         await he.finish()
+#     try:
+#         await he.finish(message=Message([at,MessageSegment.record(file=assets_dir / "he.mp3")]))
+#     except nonebot.exception.FinishedException:
+#         pass
+#     except Exception as e:
+#         logger.error(e)
 
 chishiL = on_regex(pattern=r"^吃史$")
 @chishiL.handle()
 async def chishi(bot: Bot, event: GroupMessageEvent):
-    if not feature_manager.is_enabled(event.group_id, "吃史"):
+    if not permission_manager.is_enabled(PLUGIN_REG_NAME, FEATURE_PINHAOFAN, event.group_id, event.user_id):
         return
     user_id = event.get_user_id()
     at = MessageSegment.at(user_id)
     if not usr_cd_check(user_id):
         await chishiL.finish()
-    # Removing Config.activate_eat check, relying on feature_manager (which is checked above? No, wait. 
-    # The original code had separate checks. "吃史" feature is checked at top. 
-    # But for "吃饭", we need to check "吃饭" feature.
     await chishiL.finish(message=Message([at," 吃到了史"]))
 
 
 EatL = on_regex(pattern=r"^吃饭$")
 @EatL.handle()
 async def Eat(bot: Bot, event: GroupMessageEvent):
-    if not feature_manager.is_enabled(event.group_id, "吃饭"):
+    if not permission_manager.is_enabled(PLUGIN_REG_NAME, FEATURE_PINHAOFAN, event.group_id, event.user_id):
         return
 
     user_id = event.get_user_id()
@@ -154,7 +162,7 @@ async def Eat(bot: Bot, event: GroupMessageEvent):
 Touxiang = on_regex(pattern=r"^投降$")
 @Touxiang.handle()
 async def TouxiangL(bot: Bot, event: GroupMessageEvent):
-    if not feature_manager.is_enabled(event.group_id, "投降"):
+    if not permission_manager.is_enabled(PLUGIN_REG_NAME, FEATURE_WAVE, event.group_id, event.user_id):
         return
 
     user_id = event.get_user_id()
@@ -166,7 +174,7 @@ async def TouxiangL(bot: Bot, event: GroupMessageEvent):
 Start_TotalAst = on_regex(pattern=r"^开票$")
 @Start_TotalAst.handle()
 async def StartTotalAst(bot: Bot, event: GroupMessageEvent):
-    if not feature_manager.is_enabled(event.group_id, "开票"):
+    if not permission_manager.is_enabled(PLUGIN_REG_NAME, FEATURE_KAIPIAO, event.group_id, event.user_id):
         return
 
     user_id = event.get_user_id()
@@ -179,20 +187,10 @@ async def StartTotalAst(bot: Bot, event: GroupMessageEvent):
     Total_Assault = f" 打了{selected_difficulty}难度的{random.choice(Config.Total_Assault_bosslist)}，{random.choice(opt)}了。"
     await Start_TotalAst.finish(message=Message([at, Total_Assault]))
 
-RPluckyKing = on_notice()
-@RPluckyKing.handle()
-async def RPluckyKingFunc(bot: Bot, event: LuckyKingNotifyEvent):
-    if not feature_manager.is_enabled(event.group_id, "手气王"):
-        return
-
-    at = MessageSegment.at(event.get_user_id())
-    msg = MessageSegment.text(" " + random.choice(Config.Congrats))
-    await RPluckyKing.finish(message=Message([at, msg]))
-
 pinhaofan = on_regex(pattern=r"^拼好饭$")
 @pinhaofan.handle()
 async def pin(bot: Bot, event: GroupMessageEvent):
-    if not feature_manager.is_enabled(event.group_id, "拼好饭"):
+    if not permission_manager.is_enabled(PLUGIN_REG_NAME, FEATURE_PINHAOFAN, event.group_id, event.user_id):
         return
 
     user_id = event.get_user_id()
@@ -234,3 +232,12 @@ async def jdL(bot: Bot, event: GroupMessageEvent, state: T_State):
         await jd.finish(message=Message([at," 雪诺大小姐好！"]))
     else:
         await jd.finish()
+
+liuerling  = on_regex(pattern=r"^620$")
+@liuerling.handle()
+async def liuerlingL(bot: Bot, event: GroupMessageEvent, state: T_State):
+    if event.group_id != 996101999:
+        return
+    user_id = event.get_user_id()
+    at = MessageSegment.at(user_id)
+    await liuerling.finish(message=Message([at," 所以620是什么意思？？难道是指一个叫特儿的扫群友于2026年1月23日在宜必思酒店 (天津火车站津湾广场店)六楼找不到620在哪，于是在北京bao群问620在哪吗？"]))

@@ -11,7 +11,7 @@ nonebot.init()
 
 # Imports that depend on initialized driver/config
 from src.common.logger import setup_logger
-from src.common.feature_manager import feature_manager
+# from src.common.feature_manager import feature_manager
 import src.common.database  # Register Database hooks
 
 # Setup Logger (Files + Global Error Reporting)
@@ -21,9 +21,9 @@ driver = nonebot.get_driver()
 driver.register_adapter(ONEBOT_V11Adapter)
 
 # Sync feature cache on startup
-@driver.on_startup
-async def sync_feature_cache():
-    await feature_manager.sync_cache()
+# @driver.on_startup
+# async def sync_feature_cache():
+#     await feature_manager.sync_cache()
 
 nonebot.load_from_toml("pyproject.toml")
 
