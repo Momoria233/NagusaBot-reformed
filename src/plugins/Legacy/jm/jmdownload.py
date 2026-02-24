@@ -11,8 +11,9 @@ import jmcomic.jm_exception
 from src.common.config import global_config
 from src.common.resource import resource_manager
 
-# Get data directory: data/plugins/jm
-data_dir = resource_manager.get_data_dir("jm")
+# Get data directory: data/config/jm
+data_dir = resource_manager.data_root / "config" / "jm"
+data_dir.mkdir(parents=True, exist_ok=True)
 img_path = data_dir / "src"
 pdf_path = data_dir / "pdf"
 

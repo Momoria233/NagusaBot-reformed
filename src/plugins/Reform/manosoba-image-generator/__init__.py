@@ -5,9 +5,18 @@ from nonebot.typing import T_State
 from nonebot.plugin import PluginMetadata
 import base64
 import os
-from src.common.feature_manager import feature_manager
+from src.common.permission_manager import FeatureSpec, permission_manager
 
-feature_manager.register("魔法举牌", ": \n举牌/赞同/伪证/疑问/反驳 [内容] 生成魔法图片。")
+PLUGIN_REG_NAME = "manosoba-image-generator"
+PLUGIN_REAL_NAME = "魔裁举牌"
+FEATURE_MAGIC = "魔裁举牌"
+
+permission_manager.register(
+    PLUGIN_REG_NAME,
+    PLUGIN_REAL_NAME,
+    features=[FeatureSpec(name=FEATURE_MAGIC, default_open=True, description="输入/安安或/举牌 <文字内容> 可以生成安安举牌回复，加入【魔法】可更换为使用魔法时的文本颜色\n输入/赞同/反驳/疑问/伪证 <文字内容> 可以生成游戏中的四种回复")],
+    group_customize=True,
+)
 
 from .Utils import (
     TEMPLATES,
@@ -37,7 +46,9 @@ generate_img = on_command("举牌", aliases={"安安"}, priority=1)
 @generate_img.handle()
 async def handle_generate_img(bot: Bot, event: Event, state: T_State, arg: Message = CommandArg()):
     if isinstance(event, GroupMessageEvent):
-        if not feature_manager.is_enabled(event.group_id, "魔法举牌"):
+        if not permission_manager.is_enabled(
+            PLUGIN_REG_NAME, FEATURE_MAGIC, event.group_id, event.user_id
+        ):
             return
 
     raw_text = arg.extract_plain_text().strip()
@@ -63,7 +74,9 @@ async def new_generate(type_id: str, session, arg):
 generate_img_approve = on_command("赞同", priority=1)
 @generate_img_approve.handle()
 async def handle_approve(bot: Bot, event: Event, state: T_State, arg: Message = CommandArg()):
-    if isinstance(event, GroupMessageEvent) and not feature_manager.is_enabled(event.group_id, "魔法举牌"):
+    if isinstance(event, GroupMessageEvent) and not permission_manager.is_enabled(
+        PLUGIN_REG_NAME, FEATURE_MAGIC, event.group_id, event.user_id
+    ):
         return
     await new_generate("approve", generate_img_approve, arg)
 
@@ -71,7 +84,9 @@ async def handle_approve(bot: Bot, event: Event, state: T_State, arg: Message = 
 generate_img_false = on_command("伪证", priority=1)
 @generate_img_false.handle()
 async def handle_false(bot: Bot, event: Event, state: T_State, arg: Message = CommandArg()):
-    if isinstance(event, GroupMessageEvent) and not feature_manager.is_enabled(event.group_id, "魔法举牌"):
+    if isinstance(event, GroupMessageEvent) and not permission_manager.is_enabled(
+        PLUGIN_REG_NAME, FEATURE_MAGIC, event.group_id, event.user_id
+    ):
         return
     await new_generate("false", generate_img_false, arg)
 
@@ -79,7 +94,9 @@ async def handle_false(bot: Bot, event: Event, state: T_State, arg: Message = Co
 generate_img_question = on_command("疑问", priority=1)
 @generate_img_question.handle()
 async def handle_question(bot: Bot, event: Event, state: T_State, arg: Message = CommandArg()):
-    if isinstance(event, GroupMessageEvent) and not feature_manager.is_enabled(event.group_id, "魔法举牌"):
+    if isinstance(event, GroupMessageEvent) and not permission_manager.is_enabled(
+        PLUGIN_REG_NAME, FEATURE_MAGIC, event.group_id, event.user_id
+    ):
         return
     await new_generate("question", generate_img_question, arg)
 
@@ -87,6 +104,8 @@ async def handle_question(bot: Bot, event: Event, state: T_State, arg: Message =
 generate_img_refute = on_command("反驳", priority=1)
 @generate_img_refute.handle()
 async def handle_refute(bot: Bot, event: Event, state: T_State, arg: Message = CommandArg()):
-    if isinstance(event, GroupMessageEvent) and not feature_manager.is_enabled(event.group_id, "魔法举牌"):
+    if isinstance(event, GroupMessageEvent) and not permission_manager.is_enabled(
+        PLUGIN_REG_NAME, FEATURE_MAGIC, event.group_id, event.user_id
+    ):
         return
     await new_generate("refute", generate_img_refute, arg)

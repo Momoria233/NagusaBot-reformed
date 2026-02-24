@@ -16,16 +16,25 @@ require("nonebot_plugin_apscheduler")
 from nonebot_plugin_apscheduler import scheduler
 from apscheduler.triggers.cron import CronTrigger
 
-from src.common.feature_manager import feature_manager
+from src.common.permission_manager import FeatureSpec, permission_manager
 from src.common.config import global_config
 from src.common.resource import resource_manager
 
-# Register feature
-feature_manager.register("学生生日播报功能", ": \n对于今日过生日的学生的播报功能。")
+PLUGIN_REG_NAME = "birthday"
+PLUGIN_REAL_NAME = "生日播报"
+FEATURE_BIRTHDAY = "学生生日播报功能"
+
+permission_manager.register(
+    PLUGIN_REG_NAME,
+    PLUGIN_REAL_NAME,
+    features=[FeatureSpec(name=FEATURE_BIRTHDAY, default_open=True, description="bot会在每天的00:00播报当天学生的生日")],
+    group_customize=True,
+)
 
 # Configuration
 SCHALE_DB_URL = "https://raw.githubusercontent.com/SchaleDB/SchaleDB/main/data/cn/students.json"
-data_dir = resource_manager.get_data_dir("birthday")
+data_dir = resource_manager.data_root / "config" / PLUGIN_REG_NAME
+data_dir.mkdir(parents=True, exist_ok=True)
 data_path = data_dir / "students.json"
 
 async def update_config():
@@ -142,7 +151,7 @@ async def report_birthday():
 
     for group in group_list:
         group_id = group["group_id"]
-        if feature_manager.is_enabled(group_id, "学生生日播报功能"):
+        if permission_manager.is_enabled(PLUGIN_REG_NAME, FEATURE_BIRTHDAY, group_id, None):
             try:
                 await bot.send_group_msg(group_id=group_id, message=msg)
                 await asyncio.sleep(0.5) # Avoid rate limit

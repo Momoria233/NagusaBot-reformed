@@ -10,6 +10,6 @@ adapters = [
     { name = "OneBot V11", module_name = "nonebot.adapters.onebot.v11" },
     { name = "QQ", module_name = "nonebot.adapters.qq" }
 ]
-plugins = []
-plugin_dirs = ["src/plugins/dev-test","src/plugins/Admin"]
+plugins = ["src.plugins.Admin"]
+plugin_dirs = ["src/plugins/Legacy","src/plugins/Reform"]
 builtin_plugins = ["echo"]

@@ -17,7 +17,7 @@ from nonebot.permission import SUPERUSER
 from nonebot.adapters.onebot.v11.permission import GROUP_ADMIN, GROUP_OWNER
 
 from src.common.config import global_config
-from src.common.feature_manager import feature_manager
+# from src.common.feature_manager import feature_manager
 from src.common.models import Subscription
 from src.common.resource import resource_manager
 
@@ -25,7 +25,7 @@ require("nonebot_plugin_apscheduler")
 from nonebot_plugin_apscheduler import scheduler
 
 PLUGIN_NAME = "bilibili动态转发"
-feature_manager.register(PLUGIN_NAME, ": \nbot现在会自动将部分烤肉动态转发到群里。")
+# feature_manager.register(PLUGIN_NAME, ": \nbot现在会自动将部分烤肉动态转发到群里。")
 
 INTERVAL_SECONDS = 120
 
@@ -304,8 +304,8 @@ def _pick_new_items(sorted_items: Sequence[Dict[str, Any]], known_ids: Sequence[
 
 
 async def _check_and_send(uid: str, group_id: int, *, items: Sequence[Dict[str, Any]]) -> None:
-    if not feature_manager.is_enabled(str(group_id), PLUGIN_NAME):
-        return
+    # if not feature_manager.is_enabled(str(group_id), PLUGIN_NAME):
+    #     return
 
     known_ids = _load_cache(uid, group_id)
     if not known_ids:

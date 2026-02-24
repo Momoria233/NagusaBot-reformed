@@ -9,18 +9,31 @@ from nonebot.adapters.onebot.v11 import (
     Bot, MessageEvent, Message, GroupMessageEvent, MessageSegment
 )
 from nonebot.params import EventPlainText
-from src.common.feature_manager import feature_manager
+from src.common.permission_manager import FeatureSpec, permission_manager
 from src.common.resource import resource_manager
 from src.common.config import global_config
 from src.common.logger import get_group_name, get_user_display_name
 require("nonebot_plugin_apscheduler")
 from nonebot_plugin_apscheduler import scheduler
 
-feature_manager.register("广告撤回", ": \n在群内广告下面回复“请注意广告时间”可以撤回广告，并且加以处罚记录。")
-feature_manager.register("自助撤回", ": \n回复自己的消息并发送“bot撤回一下”，让机器人协助撤回（通常用于撤回超时无法自己撤回的消息，前提是bot是管理员）。")
+PLUGIN_REG_NAME = "uniRecall"
+PLUGIN_REAL_NAME = "广告撤回"
+FEATURE_AD = "广告撤回"
+FEATURE_SELF = "自助撤回"
 
-# Data storage: data/plugins/uniRecall/revoke_records.json
-data_dir = resource_manager.get_data_dir("uniRecall")
+permission_manager.register(
+    PLUGIN_REG_NAME,
+    PLUGIN_REAL_NAME,
+    features=[
+        FeatureSpec(name=FEATURE_AD, default_open=False, description="在非广告时间回复广告消息“请注意广告时间“可以触发自动广告撤回"),
+        FeatureSpec(name=FEATURE_SELF, default_open=True, description="对自己的消息回复”bot撤回一下“可以撤回被误发送的消息"),
+    ],
+    group_customize=True,
+)
+
+# Data storage: data/config/uniRecall/revoke_records.json
+data_dir = resource_manager.data_root / "config" / PLUGIN_REG_NAME
+data_dir.mkdir(parents=True, exist_ok=True)
 revokeRec = data_dir / "revoke_records.json"
 tz = timezone(timedelta(hours=8))
 dailyStats = data_dir / "daily_stats.json"
@@ -84,7 +97,7 @@ async def recall_trigger(
 
 async def handle_advertisement(bot: Bot, event: GroupMessageEvent):
     group_id = event.group_id
-    if not feature_manager.is_enabled(group_id, "广告撤回"):
+    if not permission_manager.is_enabled(PLUGIN_REG_NAME, FEATURE_AD, group_id, event.user_id):
         return
 
     reply_user = event.reply.sender.user_id
@@ -191,7 +204,7 @@ async def handle_advertisement(bot: Bot, event: GroupMessageEvent):
             pending_kick_requests.pop(key, None)
 
 async def handle_user_recall(bot: Bot, event: GroupMessageEvent):
-    if not feature_manager.is_enabled(event.group_id, "自助撤回"):
+    if not permission_manager.is_enabled(PLUGIN_REG_NAME, FEATURE_SELF, event.group_id, event.user_id):
         return
 
     reply_user = event.reply.sender.user_id

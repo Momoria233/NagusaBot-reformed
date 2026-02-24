@@ -11,11 +11,19 @@ from nonebot.plugin import on_command
 from nonebot.rule import to_me
 
 from .jmdownload import jm_download, jm_init
-from src.common.feature_manager import feature_manager
+from src.common.permission_manager import FeatureSpec, permission_manager
 from src.common.config import global_config
 
-# Register feature
-feature_manager.register("jm", ": \n使用/jm 车牌号 可以让bot下载jm上相应的本子。")
+PLUGIN_REG_NAME = "jm"
+PLUGIN_REAL_NAME = "JM"
+FEATURE_JM = "jm"
+
+permission_manager.register(
+    PLUGIN_REG_NAME,
+    PLUGIN_REAL_NAME,
+    features=[FeatureSpec(name=FEATURE_JM, default_open=False, description="使用/jm 车牌号 可以让bot下载jm上相应的本子。")],
+    group_customize=True,
+)
 
 driver = get_driver()
 
@@ -30,7 +38,7 @@ jmDown = on_command("jm", rule=to_me())
 
 @jmDown.handle()
 async def download_group(bot: Bot, event: GroupMessageEvent, args: Message = CommandArg()):
-    if not feature_manager.is_enabled(event.group_id, "jm"):
+    if not permission_manager.is_enabled(PLUGIN_REG_NAME, FEATURE_JM, event.group_id, event.user_id):
         await jmDown.finish() # Use finish to stop if disabled
         
     reply = MessageSegment.reply(event.message_id)

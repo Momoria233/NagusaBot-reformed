@@ -3,9 +3,9 @@ from io import BytesIO
 import os
 import json
 from typing import Dict, List, Tuple
-from src.common.resource import resource_manager
+from src.common.plugin_config import get_assets_dir
 
-assets_dir = resource_manager.get_bundled_asset_dir(__file__)
+assets_dir = get_assets_dir(__file__)
 config_path = assets_dir / "config.json"
 
 TEMPLATES: List[Dict] = []

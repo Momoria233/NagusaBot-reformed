@@ -17,12 +17,21 @@ from nonebot.adapters.onebot.v11 import (
 )
 from nonebot.params import CommandArg
 
-from src.common.feature_manager import feature_manager
+from src.common.permission_manager import FeatureSpec, permission_manager
 
 from .generator import draw_quote, draw_chat_log
 
 
-feature_manager.register("miq", ": \n引用消息生成图片。")
+PLUGIN_REG_NAME = "miq"
+PLUGIN_REAL_NAME = "语录"
+FEATURE_MIQ = "miq"
+
+permission_manager.register(
+    PLUGIN_REG_NAME,
+    PLUGIN_REAL_NAME,
+    features=[FeatureSpec(name=FEATURE_MIQ, default_open=True, description="miq功能有两种使用方法：\n回复某条记录@bot输入/miq可以生成语录图片\n回复某条消息@bot输入/miq<往上记录的聊天记录数量>也可以生成语录图片")],
+    group_customize=True,
+)
 
 
 # miq_cmd = on_command("miq", rule=to_me(), priority=5, block=True)
@@ -188,7 +197,7 @@ def encode_image_to_base64(img) -> str:
 @record_msg.handle()
 async def record_group_message(event: GroupMessageEvent):
     group_id = event.group_id
-    if not feature_manager.is_enabled(group_id, "miq"):
+    if not permission_manager.is_enabled(PLUGIN_REG_NAME, FEATURE_MIQ, group_id, event.user_id):
         return
     history = message_history.get(group_id)
     if history is None:
@@ -238,7 +247,7 @@ async def handle_miq(bot: Bot, event: MessageEvent, args: Message = CommandArg()
     group_id = None
     if isinstance(event, GroupMessageEvent):
         group_id = event.group_id
-        if not feature_manager.is_enabled(group_id, "miq"):
+        if not permission_manager.is_enabled(PLUGIN_REG_NAME, FEATURE_MIQ, group_id, event.user_id):
             return
         try:
             info = await bot.get_group_info(group_id=group_id)
@@ -551,7 +560,7 @@ async def handle_miq(bot: Bot, event: MessageEvent, args: Message = CommandArg()
 async def handle_miqtest(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     group_name = None
     if isinstance(event, GroupMessageEvent):
-        if not feature_manager.is_enabled(event.group_id, "miq"):
+        if not permission_manager.is_enabled(PLUGIN_REG_NAME, FEATURE_MIQ, event.group_id, event.user_id):
             return
         try:
             info = await bot.get_group_info(group_id=event.group_id)
