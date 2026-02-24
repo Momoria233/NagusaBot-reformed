@@ -104,7 +104,6 @@ async def groupfwdmsg_handle(bot: Bot, event: GroupMessageEvent, state: T_State)
         })
 
     logger.info(f"Sending help message to group {event.group_id}")
-
     try:
         await bot.call_api("send_group_forward_msg", **helpMsg)
     except Exception as e:
