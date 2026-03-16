@@ -43,29 +43,29 @@ assets_dir = get_assets_dir(__file__)
 default_config_path = Path(__file__).parent / "config.py"
 
 
-# def _seed_legacy_defaults():
-#     for gid, msg in Config.welcome_message.items():
-#         try:
-#             current = get_group_config(
-#                 PLUGIN_REG_NAME,
-#                 gid,
-#                 default_config_path,
-#                 allow_group_customize=True,
-#             )
-#             if current.get("welcome_message"):
-#                 continue
-#             update_group_config(
-#                 PLUGIN_REG_NAME,
-#                 gid,
-#                 {"welcome_message": msg},
-#                 default_config_path,
-#                 allow_group_customize=True,
-#             )
-#         except Exception as e:
-#             logger.error(f"Failed to seed welcome config for {gid}: {e}")
+def _seed_legacy_defaults():
+    for gid, msg in Config.welcome_message.items():
+        try:
+            current = get_group_config(
+                PLUGIN_REG_NAME,
+                gid,
+                default_config_path,
+                allow_group_customize=True,
+            )
+            if current.get("welcome_message"):
+                continue
+            update_group_config(
+                PLUGIN_REG_NAME,
+                gid,
+                {"welcome_message": msg},
+                default_config_path,
+                allow_group_customize=True,
+            )
+        except Exception as e:
+            logger.error(f"Failed to seed welcome config for {gid}: {e}")
 
 
-# _seed_legacy_defaults()
+_seed_legacy_defaults()
 
 NewWelcome = on_notice()
 
@@ -85,7 +85,7 @@ async def welcoming(bot: Bot, event: GroupIncreaseNoticeEvent, state: T_State):
     )
     raw_message = config.get("welcome_message")
     if not raw_message:
-        logger.warning(f"Group {group_id} has no welcome message")
+        logger.info(f"Group {group_id} has no welcome message")
         return
 
     logger.info(f"match group id {group_id}")
@@ -155,7 +155,6 @@ async def set_welcome_handle(bot: Bot, event: Union[GroupMessageEvent, PrivateMe
              await set_welcome_cmd.finish("请提供欢迎语内容。支持占位符：{at}, {img:文件名}, {countdown:YYYY-MM-DD}")
     else:
         # Private Message
-        
         parts = raw_args.split(maxsplit=1)
         if len(parts) < 2:
              await set_welcome_cmd.finish("私聊设置请使用格式：/set_welcome <群号> <内容>")
