@@ -155,6 +155,7 @@ async def set_welcome_handle(bot: Bot, event: Union[GroupMessageEvent, PrivateMe
              await set_welcome_cmd.finish("请提供欢迎语内容。支持占位符：{at}, {img:文件名}, {countdown:YYYY-MM-DD}")
     else:
         # Private Message
+        
         parts = raw_args.split(maxsplit=1)
         if len(parts) < 2:
              await set_welcome_cmd.finish("私聊设置请使用格式：/set_welcome <群号> <内容>")
